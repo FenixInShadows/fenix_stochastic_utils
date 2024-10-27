@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "1.0",
+	"VersionName": "0.1",
 	"FriendlyName": "FenixStochasticUtils",
 	"Description": "Helpers for Stochastic Processes like gacha, drops, position sampling etc.",
 	"Category": "Other",

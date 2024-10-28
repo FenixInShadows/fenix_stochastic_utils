@@ -72,3 +72,6 @@ Plugins/**/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+# This is a plugin project, so stuff under Content directory are purely for temporary testing
+Content/*

@@ -3,12 +3,12 @@
 
 #include "CommonUtils.h"
 
-int32 UCommonUtils::BinarySearch(float target_key, const TArray<float>& increasing_keys)
+int32 UCommonUtils::BinarySearch(double target_key, const TArray<double>& increasing_keys)
 {
 	return BinarySearchInSegment(target_key, increasing_keys, 0, increasing_keys.Num());
 }
 
-int32 UCommonUtils::BinarySearchInSegment(float target_key, const TArray<float>& increasing_keys, int32 start_index, int32 end_index)
+int32 UCommonUtils::BinarySearchInSegment(double target_key, const TArray<double>& increasing_keys, int32 start_index, int32 end_index)
 {
 	if (end_index <= start_index)
 	{

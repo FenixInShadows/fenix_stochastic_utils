@@ -46,7 +46,18 @@ int32 USelectorUtils::SelectWithCumWeights(const TArray<double>& cum_weights)
 	}
 
 	double random_roll = FMath::FRandRange(0.0, sum_weight);
-	return UCommonUtils::BinarySearchInSegment(random_roll, cum_weights, 0, num - 1);
+	int32 selected_index = UCommonUtils::BinarySearchInSegment(random_roll, cum_weights, 0, num - 1);
+
+	// guard against a rare case where it rolls exactly sum_weight and one or more elements at the end are with zero weights
+	if (selected_index == num - 1)
+	{
+		while (selected_index > 0 && cum_weights[selected_index] == cum_weights[selected_index - 1])
+		{
+			selected_index--;
+		}
+	}
+
+	return selected_index;
 }
 
 int32 USelectorUtils::SelectWithWeights(const TArray<double>& weights)
@@ -77,5 +88,16 @@ int32 USelectorUtils::SelectWithWeights(const TArray<double>& weights)
 	}
 
 	double random_roll = FMath::FRandRange(0.0, sum_weight);
-	return UCommonUtils::BinarySearchInSegment(random_roll, cum_weights, 0, num - 1);
+	int32 selected_index = UCommonUtils::BinarySearchInSegment(random_roll, cum_weights, 0, num - 1);
+
+	// guard against a rare case where it rolls exactly sum_weight and one or more elements at the end are with zero weights
+	if (selected_index == num - 1)
+	{
+		while (weights[selected_index] == 0.0) // must exist at least one with positive weight
+		{
+			selected_index--;
+		}
+	}
+
+	return selected_index;
 }

@@ -14,9 +14,9 @@ struct FENIXSTOCHASTICUTILS_API FRandomSelectorConfig
 };
 
 /**
- *
+ * Blah Blah
  */
-UCLASS()
+UCLASS(BlueprintType, Blueprintable)
 class FENIXSTOCHASTICUTILS_API URandomSelector : public UObject
 {
 	GENERATED_BODY()

@@ -3,12 +3,12 @@
 
 #include "CommonUtils.h"
 
-int32 UCommonUtils::BinarySearch(double target_key, const TArray<double>& increasing_keys)
+int32 UCommonUtils::BinarySearchForInsertion(double target_key, const TArray<double>& increasing_keys)
 {
-	return BinarySearchInSegment(target_key, increasing_keys, 0, increasing_keys.Num());
+	return BinarySearchForInsertionInSegment(target_key, increasing_keys, 0, increasing_keys.Num());
 }
 
-int32 UCommonUtils::BinarySearchInSegment(double target_key, const TArray<double>& increasing_keys, int32 start_index, int32 end_index)
+int32 UCommonUtils::BinarySearchForInsertionInSegment(double target_key, const TArray<double>& increasing_keys, int32 start_index, int32 end_index)
 {
 	if (end_index <= start_index)
 	{
@@ -19,7 +19,7 @@ int32 UCommonUtils::BinarySearchInSegment(double target_key, const TArray<double
 	float mid_key = increasing_keys[mid_index];
 	if (target_key < mid_key)
 	{
-		return BinarySearchInSegment(target_key, increasing_keys, start_index, mid_index);
+		return BinarySearchForInsertionInSegment(target_key, increasing_keys, start_index, mid_index);
 	}
-	return BinarySearchInSegment(target_key, increasing_keys, mid_index + 1, end_index);
+	return BinarySearchForInsertionInSegment(target_key, increasing_keys, mid_index + 1, end_index);
 }

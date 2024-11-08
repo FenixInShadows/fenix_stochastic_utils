@@ -106,7 +106,7 @@ public:
 	* Require input weights or probs non-negative and non-decreasing.
 	*/
 	UFUNCTION(BlueprintCallable)
-	static int SelectWithCookedWeightsOrProbsConfig(const FCookedWeightsOrProbsConfig& cooked_config);
+	static int32 SelectWithCookedWeightsOrProbsConfig(const FCookedWeightsOrProbsConfig& cooked_config);
 
 	/**
 	* Select index with given WeightOrProbConfig's, negative returning value means failure.
@@ -115,9 +115,9 @@ public:
 	* If all positive entries are probabilities, then it is also padded at the last non-zero probability entry to a cumulative probability of 1.0 if not sufficient.
 	*/
 	UFUNCTION(BlueprintCallable)
-	static int SelectWithWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& raw_configs);
+	static int32 SelectWithWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& raw_configs);
 
 private:
-	static int SelectWithCumWeightsHelper(const TArray<double>& cum_weights, const int num, const double sum_weight);
-	static int SelectWithCumProbsHelper(const TArray<double>& cum_probs, const int num);
+	static int32 SelectWithCumWeightsHelper(const TArray<double>& cum_weights, const int32 num, const double sum_weight);
+	static int32 SelectWithCumProbsHelper(const TArray<double>& cum_probs, const int32 num);
 };

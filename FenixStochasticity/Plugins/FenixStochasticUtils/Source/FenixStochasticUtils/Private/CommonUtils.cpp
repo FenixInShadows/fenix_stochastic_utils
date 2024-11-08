@@ -3,23 +3,28 @@
 
 #include "CommonUtils.h"
 
-int32 UCommonUtils::BinarySearchForInsertion(double target_key, const TArray<double>& increasing_keys)
+int32 UCommonUtils::BinarySearchForInsertion(const double target_key, const TArray<double>& increasing_keys)
 {
 	return BinarySearchForInsertionInSegment(target_key, increasing_keys, 0, increasing_keys.Num());
 }
 
-int32 UCommonUtils::BinarySearchForInsertionInSegment(double target_key, const TArray<double>& increasing_keys, int32 start_index, int32 end_index)
+int32 UCommonUtils::BinarySearchForInsertionInSegment(const double target_key, const TArray<double>& increasing_keys, const int32 start_index, const int32 end_index)
 {
-	if (end_index <= start_index)
+	// simple binary recursion converted to iteration
+	int32 start = start_index;
+	int32 end = end_index;
+	while (end > start)
 	{
-		return start_index;
+		int32 mid = (start + end) / 2;
+		float mid_key = increasing_keys[mid];
+		if (target_key < mid_key)
+		{
+			end = mid;
+		}
+		else
+		{
+			start = mid + 1;
+		}
 	}
-
-	int32 mid_index = (start_index + end_index) / 2;
-	float mid_key = increasing_keys[mid_index];
-	if (target_key < mid_key)
-	{
-		return BinarySearchForInsertionInSegment(target_key, increasing_keys, start_index, mid_index);
-	}
-	return BinarySearchForInsertionInSegment(target_key, increasing_keys, mid_index + 1, end_index);
+	return start;
 }

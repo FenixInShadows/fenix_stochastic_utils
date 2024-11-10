@@ -54,29 +54,29 @@ class FENIXSTOCHASTICUTILS_API USelectorUtils : public UBlueprintFunctionLibrary
 public:
 	/** Create and return a RandomSelector. */
 	UFUNCTION(BlueprintCallable)
-	static URandomSelector* CreateRandomSelector(const FRandomSelectorConfig& config);
+	static URandomSelector* CreateRandomSelector(const FRandomSelectorConfig& Config);
 
 	/** Compute cumulative weights from weights, negative weights are regarded as zeros. */
 	UFUNCTION(BlueprintPure)
-	static TArray<double> MakeCumWeights(const TArray<double>& weights);
+	static TArray<double> MakeCumWeights(const TArray<double>& Weights);
 
 	/**
 	* Select index with given cumulative weights, negative returning value means failure.
 	* Require input non-negative and non-decreasing.
 	*/
-	UFUNCTION(BlueprintCallable)
-	static int32 SelectWithCumWeights(const TArray<double>& cum_weights);
+	UFUNCTION(BlueprintPure)
+	static int32 SelectWithCumWeights(const TArray<double>& CumWeights);
 
 	/** Select index with given weights, negative returning value means failure. */
-	UFUNCTION(BlueprintCallable)
-	static int32 SelectWithWeights(const TArray<double>& weights);
+	UFUNCTION(BlueprintPure)
+	static int32 SelectWithWeights(const TArray<double>& Weights);
 
 	/**
 	* Compute cumulative probabilities from probabilities, negative probabilities are regarded as zeros.
 	* Cut off at the end to a cumulative probability of 1.0 (output array may be shorter).
 	*/
 	UFUNCTION(BlueprintPure)
-	static TArray<double> MakeCumProbs(const TArray<double>& probs);
+	static TArray<double> MakeCumProbs(const TArray<double>& Probs);
 
 	/**
 	* Select index with given cumulative probabilities, negative returning value means failure.
@@ -84,20 +84,25 @@ public:
 	* Padding only happens at the last non-zero probability entry if total is not sufficient.
 	* Require input non-negative and non-decreasing.
 	*/
-	UFUNCTION(BlueprintCallable)
-	static int32 SelectWithCumProbs(const TArray<double>& cum_probs);
+	UFUNCTION(BlueprintPure)
+	static int32 SelectWithCumProbs(const TArray<double>& CumProbs);
 	
 	/**
 	* Select index with given probabilities, negative returning value means failure.
 	* Cut off or padded at the end to a cumulative probability of 1.0.
 	* Padding only happens at the last non-zero probability entry if total is not sufficient.
 	*/
-	UFUNCTION(BlueprintCallable)
-	static int32 SelectWithProbs(const TArray<double>& probs);
-
-	/** Make FCookedWeightsOrProbsConfig from an array of FWeightOrProbConfig's */
 	UFUNCTION(BlueprintPure)
-	static FCookedWeightsOrProbsConfig CookWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& raw_configs);
+	static int32 SelectWithProbs(const TArray<double>& Probs);
+
+	/**
+	* Make FCookedWeightsOrProbsConfig from an array of FWeightOrProbConfig's.
+	* Probabilities entries get their portion first then the remaining probabilities (if any) are considered for weight entries.
+	* Probability entries are cut off at the end to a cumulative probability of 1.0.
+	* If all positive entries are probabilities, then it is also padded at the last non-zero probability entry to a cumulative probability of 1.0 if not sufficient.
+	*/
+	UFUNCTION(BlueprintPure)
+	static FCookedWeightsOrProbsConfig CookWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& RawConfigs);
 
 	/**
 	* Select index with given CookedWeightsOrProbsConfig, negative returning value means failure.
@@ -105,17 +110,17 @@ public:
 	* Padding only happens at the last non-zero probability entry if total is not sufficient.
 	* Require input weights or probs non-negative and non-decreasing.
 	*/
-	UFUNCTION(BlueprintCallable)
-	static int32 SelectWithCookedWeightsOrProbsConfig(const FCookedWeightsOrProbsConfig& cooked_config);
+	UFUNCTION(BlueprintPure)
+	static int32 SelectWithCookedWeightsOrProbsConfig(const FCookedWeightsOrProbsConfig& CookedConfig);
 
 	/**
 	* Select index with given WeightOrProbConfig's, negative returning value means failure.
-	* Probabilities entries get priorities and the remaining probabilities (if any) are considered for weight entries.
+	* Probabilities entries get their portion first then the remaining probabilities (if any) are considered for weight entries.
 	* Probability entries are cut off at the end to a cumulative probability of 1.0.
 	* If all positive entries are probabilities, then it is also padded at the last non-zero probability entry to a cumulative probability of 1.0 if not sufficient.
 	*/
-	UFUNCTION(BlueprintCallable)
-	static int32 SelectWithWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& raw_configs);
+	UFUNCTION(BlueprintPure)
+	static int32 SelectWithWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& RawConfigs);
 
 	UFUNCTION(BlueprintPure, CustomThunk, meta = (DisplayName = "Middle Array Item", CompactNodeTitle = "MID", ArrayParm = "TargetArray", ArrayTypeDependentParams = "Item"))
 	static void GetMiddleItem(const TArray<int32>& TargetArray, int32& Item);
@@ -145,6 +150,6 @@ public:
 	static void Generic_GetMiddleItem(void* TargetArray, const FArrayProperty* ArrayProp, void* OutItem);
 
 private:
-	static int32 SelectWithCumWeightsHelper(const TArray<double>& cum_weights, const int32 num, const double sum_weight);
-	static int32 SelectWithCumProbsHelper(const TArray<double>& cum_probs, const int32 num);
+	static int32 SelectWithCumWeightsHelper(const TArray<double>& CumWeights, const int32 Num, const double SumWeight);
+	static int32 SelectWithCumProbsHelper(const TArray<double>& CumProbs, const int32 Num);
 };

@@ -333,6 +333,32 @@ int32 USelectorUtils::SelectWithWeightOrProbConfigs(const TArray<FWeightOrProbCo
 	return SelectWithCumWeightsHelper(cum_weights, num, sum_weight);
 }
 
+void USelectorUtils::GetMiddleItem(const TArray<int32>& TargetArray, int32& Item)
+{
+	// We should never hit these!  They're stubs to avoid NoExport on the class.  Call the Generic* equivalent instead
+	check(0);
+}
+
+void USelectorUtils::Generic_GetMiddleItem(void* TargetArray, const FArrayProperty* ArrayProp, void* OutItem)
+{
+	if (TargetArray)
+	{
+		FScriptArrayHelper ArrayHelper(ArrayProp, TargetArray);
+		FProperty* InnerProp = ArrayProp->Inner;
+
+		const int32 Num = ArrayHelper.Num();
+		if (ArrayHelper.Num() > 0)
+		{
+			InnerProp->CopySingleValueToScriptVM(OutItem, ArrayHelper.GetRawPtr(Num / 2));
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Red, "Warning: empty array does not have middle element");
+			InnerProp->InitializeValue(OutItem);
+		}
+	}
+}
+
 int32 USelectorUtils::SelectWithCumWeightsHelper(const TArray<double>& cum_weights, const int32 num, const double sum_weight)
 {
 	const double random_roll = FMath::FRandRange(0.0, sum_weight);

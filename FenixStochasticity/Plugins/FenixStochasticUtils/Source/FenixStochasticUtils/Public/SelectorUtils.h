@@ -117,6 +117,33 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static int32 SelectWithWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& raw_configs);
 
+	UFUNCTION(BlueprintPure, CustomThunk, meta = (DisplayName = "Middle Array Item", CompactNodeTitle = "MID", ArrayParm = "TargetArray", ArrayTypeDependentParams = "Item"))
+	static void GetMiddleItem(const TArray<int32>& TargetArray, int32& Item);
+
+	DECLARE_FUNCTION(execGetMiddleItem)
+	{
+		Stack.MostRecentProperty = nullptr;
+		Stack.StepCompiledIn<FArrayProperty>(NULL);
+		void* ArrayAddr = Stack.MostRecentPropertyAddress;
+		FArrayProperty* ArrayProperty = CastField<FArrayProperty>(Stack.MostRecentProperty);
+		if (!ArrayProperty)
+		{
+			Stack.bArrayContextFailed = true;
+			return;
+		}
+
+		Stack.MostRecentProperty = nullptr;
+		Stack.StepCompiledIn<FProperty>(nullptr);
+		void* Result = Stack.MostRecentPropertyAddress;
+
+		P_FINISH;
+		P_NATIVE_BEGIN;
+		Generic_GetMiddleItem(ArrayAddr, ArrayProperty, Result);
+		P_NATIVE_END;
+	}
+
+	static void Generic_GetMiddleItem(void* TargetArray, const FArrayProperty* ArrayProp, void* OutItem);
+
 private:
 	static int32 SelectWithCumWeightsHelper(const TArray<double>& cum_weights, const int32 num, const double sum_weight);
 	static int32 SelectWithCumProbsHelper(const TArray<double>& cum_probs, const int32 num);

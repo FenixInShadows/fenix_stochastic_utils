@@ -6,12 +6,12 @@
 #include "UObject/NoExportTypes.h"
 #include "RandomSelector.generated.h"
 
-USTRUCT(BlueprintType)
-struct FENIXSTOCHASTICUTILS_API FRandomSelectorConfig
-{
-	GENERATED_BODY()
-
-};
+//USTRUCT(BlueprintType)
+//struct FENIXSTOCHASTICUTILS_API FRandomSelectorConfig
+//{
+//	GENERATED_BODY()
+//
+//};
 
 /**
  * Blah Blah

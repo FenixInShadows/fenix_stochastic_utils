@@ -46,7 +46,7 @@ struct FENIXSTOCHASTICUTILS_API FCookedWeightsOrProbsConfig
 /**
  * 
  */
-UCLASS()
+UCLASS(meta = (BlueprintThreadSafe))
 class FENIXSTOCHASTICUTILS_API USelectorUtils : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
@@ -55,58 +55,65 @@ class FENIXSTOCHASTICUTILS_API USelectorUtils : public UBlueprintFunctionLibrary
 	//UFUNCTION(BlueprintCallable)
 	//static URandomSelector* CreateRandomSelector(const FRandomSelectorConfig& Config);
 
-public:
-	/** Compute cumulative weights from weights, negative weights are regarded as zeros. */
-	UFUNCTION(BlueprintPure)
-	static TArray<double> MakeCumWeights(const TArray<double>& Weights);
-
+public: // Blueprint and C++ APIs
 	/**
-	* Compute cumulative probabilities from probabilities, negative probabilities are regarded as zeros.
-	* Cut off at the end to a cumulative probability of 1.0 (output array may be shorter).
+	* Compute additive cumulation of values, which can be used for computing cumulative weights or probabilities.
+	* Parameter ValueLowerClamp is used for clamping at the lower bounds of each of the values before being cumulated (e.g. regard weights or probabilities as zeros).
+	* Best used on cases those original values do not change. Needs remake to update with the change on the original values.
 	*/
-	UFUNCTION(BlueprintPure)
-	static TArray<double> MakeCumProbs(const TArray<double>& Probs);
+	UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = 2))
+	static void MakeCumulatives(const TArray<double>& Values, UPARAM(DisplayName = "Return Cumulatives") TArray<double>& OutCumulatives, double ValueLowerClamp = 0.0);
 
 	/**
-	* Make FCookedWeightsOrProbsConfig from an array of FWeightOrProbConfig's.
+	* Compute additive cumulation of values with a cutoff on the total, which can be used for computing cumulative probabilities.
+	* Parameter ValueLowerClamp is used for clamping at the lower bounds of each of the values before being cumulated (e.g. regard weights or probabilities as zeros).
+	* Parameter TotalCutoff is used for cutting off later entries when the earlier entries already cumulates to no less than this parameter (e.g. cut off cumulative probability at 1.0)
+	* Due to possible cut off, the output array may be shorter than the input array. 
+	* Best used on cases those original values do not change. Needs remake to update with the change on the original values.
+	*/
+	UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = 2))
+	static void MakeCumulativesWithCutoff(const TArray<double>& Values, UPARAM(DisplayName = "Return Cumulatives") TArray<double>& OutCumulatives, double ValueLowerClamp = 0.0, double TotalCutoff = 1.0);
+
+	/**
+	* Make CookedWeightsOrProbsConfig from an array of WeightOrProbConfig's.
 	* Probabilities entries get their portion first then the remaining probabilities (if any) are considered for weight entries.
-	* Probability entries are cut off at the end to a cumulative probability of 1.0.
-	* If all positive entries are probabilities, then it is also padded at the last non-zero probability entry to a cumulative probability of 1.0 if not sufficient.
+	* The result is represented as probabilities if there are no weight entries or the total from probability entries adds up to no less than 1.0, otherwise reprenented as weights.
+	* Best used on cases where the WeightOrProbConfig's do not change. Needs remake when they get changed.
 	*/
 	UFUNCTION(BlueprintPure)
-	static FCookedWeightsOrProbsConfig CookWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& RawConfigs);
+	static void CookWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& RawConfigs, UPARAM(DisplayName = "Return WeightsOrProbsConfig") FCookedWeightsOrProbsConfig& OutConfig);
 
-private:
+private: // Blueprint only APIs
 	/**
-	* Select index with given cumulative weights, negative returning value means failure.
+	* Select index with given cumulative weights, negative returning value means failure. Not thread safe.
 	* Require input non-negative and non-decreasing.
 	*/
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Cum Weights"))
-	static int32 BPFunc_SelectWithCumWeights(const TArray<double>& CumWeights);
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Cum Weights", NotBlueprintThreadSafe))
+	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithCumWeights(const TArray<double>& CumWeights);
 
 	/**
 	* Select index with given cumulative weights and a random stream (can be seeded), negative returning value means failure.
 	* Require input non-negative and non-decreasing.
 	*/
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Cum Weights From Stream"))
-	static int32 BPFunc_SelectWithCumWeightsFromStream(const TArray<double>& CumWeights, UPARAM(ref) FRandomStream& Stream);
+	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithCumWeightsFromStream(const TArray<double>& CumWeights, UPARAM(ref) FRandomStream& Stream);
 
-	/** Select index with given weights, negative returning value means failure. */
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Weights"))
-	static int32 BPFunc_SelectWithWeights(const TArray<double>& Weights);
+	/** Select index with given weights, negative returning value means failure. Not thread safe.*/
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Weights", NotBlueprintThreadSafe))
+	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithWeights(const TArray<double>& Weights);
 
 	/** Select index with given weights and a random stream (can be seeded), negative returning value means failure. */
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Weights From Stream"))
-	static int32 BPFunc_SelectWithWeightsFromStream(const TArray<double>& Weights, UPARAM(ref) FRandomStream& Stream);
+	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithWeightsFromStream(const TArray<double>& Weights, UPARAM(ref) FRandomStream& Stream);
 
 	/**
-	* Select index with given cumulative probabilities, negative returning value means failure.
+	* Select index with given cumulative probabilities, negative returning value means failure. Not thread safe.
 	* Cut off or padded at the end to a cumulative probability of 1.0 if the total is more.
 	* If the total is not enough, then when it rolls outside it counts as failure.
 	* Require input non-negative and non-decreasing.
 	*/
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Cum Probs"))
-	static int32 BPFunc_SelectWithCumProbs(const TArray<double>& CumProbs);
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Cum Probs", NotBlueprintThreadSafe))
+	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithCumProbs(const TArray<double>& CumProbs);
 
 	/**
 	* Select index with given cumulative probabilities and a random stream, negative returning value means failure.
@@ -115,15 +122,15 @@ private:
 	* Require input non-negative and non-decreasing.
 	*/
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Cum Probs From Stream"))
-	static int32 BPFunc_SelectWithCumProbsFromStream(const TArray<double>& CumProbs, UPARAM(ref) FRandomStream& Stream);
+	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithCumProbsFromStream(const TArray<double>& CumProbs, UPARAM(ref) FRandomStream& Stream);
 	
 	/**
-	* Select index with given probabilities, negative returning value means failure.
+	* Select index with given probabilities, negative returning value means failure. Not thread safe.
 	* Cut off or padded at the end to a cumulative probability of 1.0 if the total is more.
 	* If the total is not enough, then when it rolls outside it counts as failure.
 	*/
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Probs"))
-	static int32 BPFunc_SelectWithProbs(const TArray<double>& Probs);
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Probs", NotBlueprintThreadSafe))
+	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithProbs(const TArray<double>& Probs);
 
 	/**
 	* Select index with given probabilities and a random stream, negative returning value means failure.
@@ -131,16 +138,16 @@ private:
 	* If the total is not enough, then when it rolls outside it counts as failure.
 	*/
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Probs From Stream"))
-	static int32 BPFunc_SelectWithProbsFromStream(const TArray<double>& Probs, UPARAM(ref) FRandomStream& Stream);
+	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithProbsFromStream(const TArray<double>& Probs, UPARAM(ref) FRandomStream& Stream);
 
 	/**
-	* Select index with given CookedWeightsOrProbsConfig, negative returning value means failure.
+	* Select index with given CookedWeightsOrProbsConfig, negative returning value means failure. Not thread safe.
 	* If the input is probabilities, then cut off to a cumulative probability of 1.0 if the total is more.
 	* If the input is probabilities and and the total is not enough, then when it rolls outside it counts as failure.
 	* Require input weights or probs non-negative and non-decreasing.
 	*/
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With CookedWeightsOrProbsConfig"))
-	static int32 BPFunc_SelectWithCookedWeightsOrProbsConfig(const FCookedWeightsOrProbsConfig& CookedConfig);
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With CookedWeightsOrProbsConfig", NotBlueprintThreadSafe))
+	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithCookedWeightsOrProbsConfig(const FCookedWeightsOrProbsConfig& CookedConfig);
 
 	/**
 	* Select index with given CookedWeightsOrProbsConfig and a random stream, negative returning value means failure.
@@ -149,16 +156,16 @@ private:
 	* Require input weights or probs non-negative and non-decreasing.
 	*/
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With CookedWeightsOrProbsConfig From Stream"))
-	static int32 BPFunc_SelectWithCookedWeightsOrProbsConfigFromStream(const FCookedWeightsOrProbsConfig& CookedConfig, UPARAM(ref) FRandomStream& Stream);
+	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithCookedWeightsOrProbsConfigFromStream(const FCookedWeightsOrProbsConfig& CookedConfig, UPARAM(ref) FRandomStream& Stream);
 
 	/**
-	* Select index with given WeightOrProbConfig's, negative returning value means failure.
+	* Select index with given WeightOrProbConfig's, negative returning value means failure. Not thread safe.
 	* Probabilities entries get their portion first then the remaining probabilities (if any) are considered for weight entries.
 	* Probability entries are cut off at the end to a cumulative probability of 1.0 if the total is more.
 	* If all positive entries are probabilities and the total is not enough, then when it rolls outside it counts as failure.
 	*/
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With WeightOrProbConfigs"))
-	static int32 BPFunc_SelectWithWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& RawConfigs);
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With WeightOrProbConfigs", NotBlueprintThreadSafe))
+	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& RawConfigs);
 
 	/**
 	* Select index with given WeightOrProbConfig's and a random stream, negative returning value means failure.
@@ -167,19 +174,19 @@ private:
 	* If all positive entries are probabilities and the total is not enough, then when it rolls outside it counts as failure.
 	*/
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With WeightOrProbConfigs From Stream"))
-	static int32 BPFunc_SelectWithWeightOrProbConfigsFromStream(const TArray<FWeightOrProbConfig>& RawConfigs, UPARAM(ref) FRandomStream& Stream);
+	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithWeightOrProbConfigsFromStream(const TArray<FWeightOrProbConfig>& RawConfigs, UPARAM(ref) FRandomStream& Stream);
 
-public:
+public:  // C++ only APIs
 	/**
 	* Select index with given cumulative weights, negative returning value means failure.
 	* Require input non-negative and non-decreasing.
-	* Using a random stream if the optional input Stream is not nullptr.
+	* Using a random stream if the optional input Stream is not nullptr. Threadsafe only when using a stream.
 	*/
 	static int32 SelectWithCumWeights(const TArray<double>& CumWeights, FRandomStream* Stream = nullptr);
 
 	/** 
 	* Select index with given weights, negative returning value means failure.
-	* Using a random stream if the optional input Stream is not nullptr.
+	* Using a random stream if the optional input Stream is not nullptr. Threadsafe only when using a stream.
 	*/
 	static int32 SelectWithWeights(const TArray<double>& Weights, FRandomStream* Stream = nullptr);
 
@@ -188,7 +195,7 @@ public:
 	* Cut off or padded at the end to a cumulative probability of 1.0 if the total is more.
 	* If the total is not enough, then when it rolls outside it counts as failure.
 	* Require input non-negative and non-decreasing.
-	* Using a random stream if the optional input Stream is not nullptr.
+	* Using a random stream if the optional input Stream is not nullptr. Threadsafe only when using a stream.
 	*/
 	static int32 SelectWithCumProbs(const TArray<double>& CumProbs, FRandomStream* Stream = nullptr);
 	
@@ -196,7 +203,7 @@ public:
 	* Select index with given probabilities, negative returning value means failure.
 	* Cut off or padded at the end to a cumulative probability of 1.0 if the total is more.
 	* If the total is not enough, then when it rolls outside it counts as failure.
-	* Using a random stream if the optional input Stream is not nullptr.
+	* Using a random stream if the optional input Stream is not nullptr. Threadsafe only when using a stream.
 	*/
 	static int32 SelectWithProbs(const TArray<double>& Probs, FRandomStream* Stream = nullptr);
 
@@ -205,7 +212,7 @@ public:
 	* If the input is probabilities, then cut off to a cumulative probability of 1.0 if the total is more. 
 	* If the input is probabilities and and the total is not enough, then when it rolls outside it counts as failure.
 	* Require input weights or probs non-negative and non-decreasing.
-	* Using a random stream if the optional input Stream is not nullptr.
+	* Using a random stream if the optional input Stream is not nullptr. Threadsafe only when using a stream.
 	*/
 	static int32 SelectWithCookedWeightsOrProbsConfig(const FCookedWeightsOrProbsConfig& CookedConfig, FRandomStream* Stream = nullptr);
 
@@ -214,7 +221,7 @@ public:
 	* Probabilities entries get their portion first then the remaining probabilities (if any) are considered for weight entries.
 	* Probability entries are cut off at the end to a cumulative probability of 1.0 if the total is more.
 	* If all positive entries are probabilities and the total is not enough, then when it rolls outside it counts as failure.
-	* Using a random stream if the optional input Stream is not nullptr.
+	* Using a random stream if the optional input Stream is not nullptr. Threadsafe only when using a stream.
 	*/
 	static int32 SelectWithWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& RawConfigs, FRandomStream* Stream = nullptr);
 
@@ -246,10 +253,40 @@ public:
 
 	static void Generic_GetMiddleItem(void* TargetArray, const FArrayProperty* ArrayProp, void* OutItem);
 
+	/*UFUNCTION(BlueprintPure, CustomThunk, meta = (MapParam = "ConfigMap", MapKeyParam = "SelecteElement", AutoCreateRefTerm = "SelecteElement", NotBlueprintThreadSafe))
+	static void SelectElementWithWeightOrProbConfigMap(const TMap<int32, FWeightOrProbConfig>& ConfigMap, UPARAM(DisplayName = "Return Element") int32& SelecteElement);
+
+	DECLARE_FUNCTION(execSelectElementWithWeightOrProbConfigMap)
+	{
+		Stack.MostRecentProperty = nullptr;
+		Stack.StepCompiledIn<FMapProperty>(NULL);
+		void* MapAddr = Stack.MostRecentPropertyAddress;
+		FMapProperty* MapProperty = CastField<FMapProperty>(Stack.MostRecentProperty);
+		if (!MapProperty)
+		{
+			Stack.bArrayContextFailed = true;
+			return;
+		}
+
+
+
+		P_FINISH;
+		P_NATIVE_BEGIN;
+		P_NATIVE_END;
+	}
+
+	static void Generic_SelectElementWithWeightOrProbConfigMap(const void* ConfigMap, const FMapProperty* MapProperty, void* SelectedElementPtr, FRandomStream* Stream = nullptr);*/
+
 private:
-	/** Helper for selecting with weights. Using a random stream if the optional input Stream is not nullptr. It assumes Num and SumWeight being appropriate and non-zero. */
-	static int32 SelectWithCumWeightsHelper(const TArray<double>& CumWeights, const int32 Num, const double SumWeight, FRandomStream* RandStream = nullptr);
+	/** 
+	* Helper for selecting with weights. It assumes Num and SumWeight being appropriate and non-zero.
+	* Using a random stream if the optional input Stream is not nullptr. Threadsafe only when using a stream.
+	*/
+	static int32 SelectWithCumWeightsHelper(const TArray<double>& CumWeights, const int32 Num, const double SumWeight, FRandomStream* Stream = nullptr);
 	
-	/** Helper for selecting with probabilities. Using a random stream if the optional input Stream is not nullptr. It assumes Num being appropriate and non-zero. */
-	static int32 SelectWithCumProbsHelper(const TArray<double>& CumProbs, const int32 Num, FRandomStream* RandStream = nullptr);
+	/** 
+	* Helper for selecting with probabilities. It assumes Num being appropriate and non-zero.
+	* Using a random stream if the optional input Stream is not nullptr. Threadsafe only when using a stream.
+	*/
+	static int32 SelectWithCumProbsHelper(const TArray<double>& CumProbs, const int32 Num, FRandomStream* Stream = nullptr);
 };

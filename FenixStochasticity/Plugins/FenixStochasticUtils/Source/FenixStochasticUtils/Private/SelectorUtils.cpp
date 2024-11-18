@@ -18,8 +18,7 @@ void USelectorUtils::MakeCumulatives(const TArray<double>& Values, TArray<double
 
 	for (int32 Idx = 0; Idx < Num; Idx++)
 	{
-		const double TempValue = FMath::Max(Values[Idx], ValueLowerClamp);
-		SumValue += TempValue;
+		SumValue += FMath::Max(Values[Idx], ValueLowerClamp);
 		OutCumulatives[Idx] = SumValue;
 	}
 }
@@ -33,8 +32,7 @@ void USelectorUtils::MakeCumulativesWithCutoff(const TArray<double>& Values, TAr
 
 	for (int32 Idx = 0; Idx < Num; Idx++)
 	{
-		const double TempValue = FMath::Max(Values[Idx], ValueLowerClamp);
-		SumValue += TempValue;
+		SumValue += FMath::Max(Values[Idx], ValueLowerClamp);
 		OutCumulatives[Idx] = SumValue;
 		if (Idx < Num - 1 && SumValue >= TotalCutoff)  // cutoff
 		{
@@ -349,32 +347,6 @@ int32 USelectorUtils::SelectWithWeightOrProbEntries(const TArray<FWeightOrProbEn
 		CumWeights[Idx] = SumWeight;
 	}
 	return SelectWithCumWeightsHelper(CumWeights, Num, SumWeight, Stream);
-}
-
-void USelectorUtils::GetMiddleItem(const TArray<int32>& TargetArray, int32& Item)
-{
-	// We should never hit these! They're stubs to avoid NoExport on the class. Call the Generic* equivalent instead.
-	check(0);
-}
-
-void USelectorUtils::Generic_GetMiddleItem(void* TargetArray, const FArrayProperty* ArrayProp, void* OutItem)
-{
-	if (TargetArray)
-	{
-		FScriptArrayHelper ArrayHelper(ArrayProp, TargetArray);
-		FProperty* InnerProp = ArrayProp->Inner;
-
-		const int32 Num = ArrayHelper.Num();
-		if (ArrayHelper.Num() > 0)
-		{
-			InnerProp->CopySingleValueToScriptVM(OutItem, ArrayHelper.GetRawPtr(Num / 2));
-		}
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Red, "Warning: empty array does not have middle element");
-			InnerProp->InitializeValue(OutItem);
-		}
-	}
 }
 
 int32 USelectorUtils::SelectWithCumWeightsHelper(const TArray<double>& CumWeights, const int32 Num, const double SumWeight, FRandomStream* Stream)

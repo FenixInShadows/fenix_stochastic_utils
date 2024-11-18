@@ -28,3 +28,17 @@ int32 UCommonUtils::BinarySearchForInsertionInSegment(const double TargetKey, co
 	}
 	return Start;
 }
+
+void UCommonUtils::MakeSimpleCumulatives(const TArray<double>& Values, TArray<double>& OutCumulatives)
+{
+	const int32 Num = Values.Num();
+
+	OutCumulatives.SetNum(Num);
+	double SumValue = 0.0;
+
+	for (int32 Idx = 0; Idx < Num; Idx++)
+	{
+		SumValue += Values[Idx];
+		OutCumulatives[Idx] = SumValue;
+	}
+}

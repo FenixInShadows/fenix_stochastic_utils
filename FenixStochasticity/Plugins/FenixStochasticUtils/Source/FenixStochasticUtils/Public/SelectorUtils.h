@@ -62,7 +62,7 @@ public: // Blueprint and C++ APIs
 	* Best used on cases those original values do not change. Needs remake to update with the change on the original values.
 	*/
 	UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = 2))
-	static void MakeCumulatives(const TArray<double>& Values, UPARAM(DisplayName = "Out Cumulatives") TArray<double>& OutCumulatives, double ValueLowerClamp = 0.0);
+	static void MakeCumulatives(const TArray<double>& Values, TArray<double>& OutCumulatives, double ValueLowerClamp = 0.0);
 
 	/**
 	* Compute additive cumulation of values with a cutoff on the total, which can be used for computing cumulative probabilities.
@@ -72,7 +72,7 @@ public: // Blueprint and C++ APIs
 	* Best used on cases those original values do not change. Needs remake to update with the change on the original values.
 	*/
 	UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = 2))
-	static void MakeCumulativesWithCutoff(const TArray<double>& Values, UPARAM(DisplayName = "Out Cumulatives") TArray<double>& OutCumulatives, double ValueLowerClamp = 0.0, double TotalCutoff = 1.0);
+	static void MakeCumulativesWithCutoff(const TArray<double>& Values, TArray<double>& OutCumulatives, double ValueLowerClamp = 0.0, double TotalCutoff = 1.0);
 
 	/**
 	* Make CookedSelectorDistribution from an array of WeightOrProbEntry's.
@@ -81,7 +81,7 @@ public: // Blueprint and C++ APIs
 	* Best used on cases where the WeightOrProbEntry's do not change. Needs remake when they get changed.
 	*/
 	UFUNCTION(BlueprintPure)
-	static void CookSelectorDistribution(const TArray<FWeightOrProbEntry>& Entries, UPARAM(DisplayName = "Out Distribution") FCookedSelectorDistribution& OutDistribution);
+	static void CookSelectorDistribution(const TArray<FWeightOrProbEntry>& Entries, FCookedSelectorDistribution& OutDistribution);
 
 private: // Blueprint only APIs
 	/**
@@ -224,58 +224,6 @@ public:  // C++ only APIs
 	* Using a random stream if the optional input Stream is not nullptr. Threadsafe only when using a stream.
 	*/
 	static int32 SelectWithWeightOrProbEntries(const TArray<FWeightOrProbEntry>& Entries, FRandomStream* Stream = nullptr);
-
-
-	UFUNCTION(BlueprintPure, CustomThunk, meta = (DisplayName = "Middle Array Item", CompactNodeTitle = "MID", ArrayParm = "TargetArray", ArrayTypeDependentParams = "Item"))
-	static void GetMiddleItem(const TArray<int32>& TargetArray, int32& Item);
-
-	DECLARE_FUNCTION(execGetMiddleItem)
-	{
-		Stack.MostRecentProperty = nullptr;
-		Stack.StepCompiledIn<FArrayProperty>(NULL);
-		void* ArrayAddr = Stack.MostRecentPropertyAddress;
-		FArrayProperty* ArrayProperty = CastField<FArrayProperty>(Stack.MostRecentProperty);
-		if (!ArrayProperty)
-		{
-			Stack.bArrayContextFailed = true;
-			return;
-		}
-
-		Stack.MostRecentProperty = nullptr;
-		Stack.StepCompiledIn<FProperty>(nullptr);
-		void* Result = Stack.MostRecentPropertyAddress;
-
-		P_FINISH;
-		P_NATIVE_BEGIN;
-		Generic_GetMiddleItem(ArrayAddr, ArrayProperty, Result);
-		P_NATIVE_END;
-	}
-
-	static void Generic_GetMiddleItem(void* TargetArray, const FArrayProperty* ArrayProp, void* OutItem);
-
-	/*UFUNCTION(BlueprintPure, CustomThunk, meta = (MapParam = "EntryMap", MapKeyParam = "OutItem", AutoCreateRefTerm = "OutItem", NotBlueprintThreadSafe))
-	static void SelectItemWithWeightOrProbEntryMap(const TMap<int32, FWeightOrProbEntry>& EntryMap, UPARAM(DisplayName = "Out Item") int32& OutItem);
-
-	DECLARE_FUNCTION(execSelectItemWithWeightOrProbEntryMap)
-	{
-		Stack.MostRecentProperty = nullptr;
-		Stack.StepCompiledIn<FMapProperty>(NULL);
-		void* MapAddr = Stack.MostRecentPropertyAddress;
-		FMapProperty* MapProperty = CastField<FMapProperty>(Stack.MostRecentProperty);
-		if (!MapProperty)
-		{
-			Stack.bArrayContextFailed = true;
-			return;
-		}
-
-
-
-		P_FINISH;
-		P_NATIVE_BEGIN;
-		P_NATIVE_END;
-	}
-
-	static void Generic_SelectItemWithWeightOrProbEntryMap(const void* EntryMap, const FMapProperty* MapProperty, void* OutItemPtr, FRandomStream* Stream = nullptr);*/
 
 private:
 	/** 

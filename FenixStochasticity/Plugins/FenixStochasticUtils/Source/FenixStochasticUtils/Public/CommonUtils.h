@@ -23,7 +23,9 @@ public:
 	UFUNCTION(BlueprintPure)
 	static UPARAM(DisplayName = "Out Index") int32 BinarySearchForInsertionInSegment(const double TargetKey, const TArray<double>& IncreasingKeys, const int32 StartIndex, const int32 EndIndex);
 
-
+	/** Compute simple additive cumulation of values in an array, outputing the cumulative array. */
+	UFUNCTION(BlueprintPure)
+	static void MakeSimpleCumulatives(const TArray<double>& Values, TArray<double>& OutCumulatives);
 
 	/** FRand logic, but using a random stream if the optional input Stream is not nullptr. Threadsafe only when using a stream. */
 	static FORCEINLINE float FRandMaybeWithStream(FRandomStream* Stream = nullptr)

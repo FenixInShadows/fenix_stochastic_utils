@@ -45,11 +45,11 @@ void USelectorUtils::MakeCumulativesWithCutoff(const TArray<double>& Values, TAr
 	}
 }
 
-void USelectorUtils::CookWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& RawConfigs, FCookedWeightsOrProbsConfig& OutConfig)
+void USelectorUtils::CookWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& RawConfigs, FCookedWeightsOrProbsConfig& OutCookedConfig)
 {
 	const int32 Num = RawConfigs.Num();
 
-	OutConfig.CumWeightsOrCumProbs.SetNum(Num);
+	OutCookedConfig.CumWeightsOrCumProbs.SetNum(Num);
 	double SumWeight = 0.0;
 	double SumProb = 0.0;
 
@@ -67,7 +67,7 @@ void USelectorUtils::CookWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& 
 
 	if (SumProb == 0.0)  // pure weights
 	{
-		OutConfig.IsProbs = false;
+		OutCookedConfig.IsProbs = false;
 		SumWeight = 0.0;
 		for (int32 Idx = 0; Idx < Num; Idx++)
 		{
@@ -75,12 +75,12 @@ void USelectorUtils::CookWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& 
 			{
 				SumWeight += FMath::Max(RawConfigs[Idx].WeightOrProb, 0.0);
 			}
-			OutConfig.CumWeightsOrCumProbs[Idx] = SumWeight;
+			OutCookedConfig.CumWeightsOrCumProbs[Idx] = SumWeight;
 		}
 	}
 	else if (SumWeight == 0.0 || 1.0 - SumProb < 1e-6)  // pure probabilities
 	{
-		OutConfig.IsProbs = true;
+		OutCookedConfig.IsProbs = true;
 		SumProb = 0.0;
 		for (int32 Idx = 0; Idx < Num; Idx++)
 		{
@@ -89,12 +89,12 @@ void USelectorUtils::CookWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& 
 				SumProb += FMath::Max(RawConfigs[Idx].WeightOrProb, 0.0);
 			}
 			// Note: don't do cut off here, as we do not make much assumptions on how the result would be used
-			OutConfig.CumWeightsOrCumProbs[Idx] = SumProb;
+			OutCookedConfig.CumWeightsOrCumProbs[Idx] = SumProb;
 		}
 	}
 	else  // mixture: convert to weights
 	{
-		OutConfig.IsProbs = false;
+		OutCookedConfig.IsProbs = false;
 		const double WeightFactor = SumWeight / (1.0 - SumProb);
 		SumWeight = 0.0;
 		for (int32 Idx = 0; Idx < Num; Idx++)
@@ -107,7 +107,7 @@ void USelectorUtils::CookWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& 
 			{
 				SumWeight += FMath::Max(RawConfigs[Idx].WeightOrProb, 0.0);
 			}
-			OutConfig.CumWeightsOrCumProbs[Idx] = SumWeight;
+			OutCookedConfig.CumWeightsOrCumProbs[Idx] = SumWeight;
 		}
 	}
 }

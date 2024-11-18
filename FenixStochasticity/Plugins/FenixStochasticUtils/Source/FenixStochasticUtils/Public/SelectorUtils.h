@@ -62,7 +62,7 @@ public: // Blueprint and C++ APIs
 	* Best used on cases those original values do not change. Needs remake to update with the change on the original values.
 	*/
 	UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = 2))
-	static void MakeCumulatives(const TArray<double>& Values, UPARAM(DisplayName = "Return Cumulatives") TArray<double>& OutCumulatives, double ValueLowerClamp = 0.0);
+	static void MakeCumulatives(const TArray<double>& Values, UPARAM(DisplayName = "Out Cumulatives") TArray<double>& OutCumulatives, double ValueLowerClamp = 0.0);
 
 	/**
 	* Compute additive cumulation of values with a cutoff on the total, which can be used for computing cumulative probabilities.
@@ -72,7 +72,7 @@ public: // Blueprint and C++ APIs
 	* Best used on cases those original values do not change. Needs remake to update with the change on the original values.
 	*/
 	UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = 2))
-	static void MakeCumulativesWithCutoff(const TArray<double>& Values, UPARAM(DisplayName = "Return Cumulatives") TArray<double>& OutCumulatives, double ValueLowerClamp = 0.0, double TotalCutoff = 1.0);
+	static void MakeCumulativesWithCutoff(const TArray<double>& Values, UPARAM(DisplayName = "Out Cumulatives") TArray<double>& OutCumulatives, double ValueLowerClamp = 0.0, double TotalCutoff = 1.0);
 
 	/**
 	* Make CookedWeightsOrProbsConfig from an array of WeightOrProbConfig's.
@@ -81,7 +81,7 @@ public: // Blueprint and C++ APIs
 	* Best used on cases where the WeightOrProbConfig's do not change. Needs remake when they get changed.
 	*/
 	UFUNCTION(BlueprintPure)
-	static void CookWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& RawConfigs, UPARAM(DisplayName = "Return WeightsOrProbsConfig") FCookedWeightsOrProbsConfig& OutConfig);
+	static void CookWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& RawConfigs, UPARAM(DisplayName = "Out Cooked Config") FCookedWeightsOrProbsConfig& OutCookedConfig);
 
 private: // Blueprint only APIs
 	/**
@@ -89,22 +89,22 @@ private: // Blueprint only APIs
 	* Require input non-negative and non-decreasing.
 	*/
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Cum Weights", NotBlueprintThreadSafe))
-	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithCumWeights(const TArray<double>& CumWeights);
+	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithCumWeights(const TArray<double>& CumWeights);
 
 	/**
 	* Select index with given cumulative weights and a random stream (can be seeded), negative returning value means failure.
 	* Require input non-negative and non-decreasing.
 	*/
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Cum Weights From Stream"))
-	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithCumWeightsFromStream(const TArray<double>& CumWeights, UPARAM(ref) FRandomStream& Stream);
+	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithCumWeightsFromStream(const TArray<double>& CumWeights, UPARAM(ref) FRandomStream& Stream);
 
 	/** Select index with given weights, negative returning value means failure. Not thread safe.*/
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Weights", NotBlueprintThreadSafe))
-	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithWeights(const TArray<double>& Weights);
+	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithWeights(const TArray<double>& Weights);
 
 	/** Select index with given weights and a random stream (can be seeded), negative returning value means failure. */
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Weights From Stream"))
-	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithWeightsFromStream(const TArray<double>& Weights, UPARAM(ref) FRandomStream& Stream);
+	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithWeightsFromStream(const TArray<double>& Weights, UPARAM(ref) FRandomStream& Stream);
 
 	/**
 	* Select index with given cumulative probabilities, negative returning value means failure. Not thread safe.
@@ -113,7 +113,7 @@ private: // Blueprint only APIs
 	* Require input non-negative and non-decreasing.
 	*/
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Cum Probs", NotBlueprintThreadSafe))
-	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithCumProbs(const TArray<double>& CumProbs);
+	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithCumProbs(const TArray<double>& CumProbs);
 
 	/**
 	* Select index with given cumulative probabilities and a random stream, negative returning value means failure.
@@ -122,7 +122,7 @@ private: // Blueprint only APIs
 	* Require input non-negative and non-decreasing.
 	*/
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Cum Probs From Stream"))
-	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithCumProbsFromStream(const TArray<double>& CumProbs, UPARAM(ref) FRandomStream& Stream);
+	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithCumProbsFromStream(const TArray<double>& CumProbs, UPARAM(ref) FRandomStream& Stream);
 	
 	/**
 	* Select index with given probabilities, negative returning value means failure. Not thread safe.
@@ -130,7 +130,7 @@ private: // Blueprint only APIs
 	* If the total is not enough, then when it rolls outside it counts as failure.
 	*/
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Probs", NotBlueprintThreadSafe))
-	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithProbs(const TArray<double>& Probs);
+	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithProbs(const TArray<double>& Probs);
 
 	/**
 	* Select index with given probabilities and a random stream, negative returning value means failure.
@@ -138,7 +138,7 @@ private: // Blueprint only APIs
 	* If the total is not enough, then when it rolls outside it counts as failure.
 	*/
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Probs From Stream"))
-	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithProbsFromStream(const TArray<double>& Probs, UPARAM(ref) FRandomStream& Stream);
+	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithProbsFromStream(const TArray<double>& Probs, UPARAM(ref) FRandomStream& Stream);
 
 	/**
 	* Select index with given CookedWeightsOrProbsConfig, negative returning value means failure. Not thread safe.
@@ -147,7 +147,7 @@ private: // Blueprint only APIs
 	* Require input weights or probs non-negative and non-decreasing.
 	*/
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With CookedWeightsOrProbsConfig", NotBlueprintThreadSafe))
-	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithCookedWeightsOrProbsConfig(const FCookedWeightsOrProbsConfig& CookedConfig);
+	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithCookedWeightsOrProbsConfig(const FCookedWeightsOrProbsConfig& CookedConfig);
 
 	/**
 	* Select index with given CookedWeightsOrProbsConfig and a random stream, negative returning value means failure.
@@ -156,7 +156,7 @@ private: // Blueprint only APIs
 	* Require input weights or probs non-negative and non-decreasing.
 	*/
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With CookedWeightsOrProbsConfig From Stream"))
-	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithCookedWeightsOrProbsConfigFromStream(const FCookedWeightsOrProbsConfig& CookedConfig, UPARAM(ref) FRandomStream& Stream);
+	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithCookedWeightsOrProbsConfigFromStream(const FCookedWeightsOrProbsConfig& CookedConfig, UPARAM(ref) FRandomStream& Stream);
 
 	/**
 	* Select index with given WeightOrProbConfig's, negative returning value means failure. Not thread safe.
@@ -165,7 +165,7 @@ private: // Blueprint only APIs
 	* If all positive entries are probabilities and the total is not enough, then when it rolls outside it counts as failure.
 	*/
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With WeightOrProbConfigs", NotBlueprintThreadSafe))
-	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& RawConfigs);
+	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& RawConfigs);
 
 	/**
 	* Select index with given WeightOrProbConfig's and a random stream, negative returning value means failure.
@@ -174,7 +174,7 @@ private: // Blueprint only APIs
 	* If all positive entries are probabilities and the total is not enough, then when it rolls outside it counts as failure.
 	*/
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With WeightOrProbConfigs From Stream"))
-	static UPARAM(DisplayName = "Return Index") int32 BPFunc_SelectWithWeightOrProbConfigsFromStream(const TArray<FWeightOrProbConfig>& RawConfigs, UPARAM(ref) FRandomStream& Stream);
+	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithWeightOrProbConfigsFromStream(const TArray<FWeightOrProbConfig>& RawConfigs, UPARAM(ref) FRandomStream& Stream);
 
 public:  // C++ only APIs
 	/**
@@ -253,10 +253,10 @@ public:  // C++ only APIs
 
 	static void Generic_GetMiddleItem(void* TargetArray, const FArrayProperty* ArrayProp, void* OutItem);
 
-	/*UFUNCTION(BlueprintPure, CustomThunk, meta = (MapParam = "ConfigMap", MapKeyParam = "SelecteElement", AutoCreateRefTerm = "SelecteElement", NotBlueprintThreadSafe))
-	static void SelectElementWithWeightOrProbConfigMap(const TMap<int32, FWeightOrProbConfig>& ConfigMap, UPARAM(DisplayName = "Return Element") int32& SelecteElement);
+	/*UFUNCTION(BlueprintPure, CustomThunk, meta = (MapParam = "ConfigMap", MapKeyParam = "OutItem", AutoCreateRefTerm = "OutItem", NotBlueprintThreadSafe))
+	static void SelectItemWithWeightOrProbConfigMap(const TMap<int32, FWeightOrProbConfig>& ConfigMap, UPARAM(DisplayName = "Out Item") int32& OutItem);
 
-	DECLARE_FUNCTION(execSelectElementWithWeightOrProbConfigMap)
+	DECLARE_FUNCTION(execSelectItemWithWeightOrProbConfigMap)
 	{
 		Stack.MostRecentProperty = nullptr;
 		Stack.StepCompiledIn<FMapProperty>(NULL);
@@ -275,7 +275,7 @@ public:  // C++ only APIs
 		P_NATIVE_END;
 	}
 
-	static void Generic_SelectElementWithWeightOrProbConfigMap(const void* ConfigMap, const FMapProperty* MapProperty, void* SelectedElementPtr, FRandomStream* Stream = nullptr);*/
+	static void Generic_SelectItemWithWeightOrProbConfigMap(const void* ConfigMap, const FMapProperty* MapProperty, void* OutItemPtr, FRandomStream* Stream = nullptr);*/
 
 private:
 	/** 

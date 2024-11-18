@@ -45,69 +45,69 @@ void USelectorUtils::MakeCumulativesWithCutoff(const TArray<double>& Values, TAr
 	}
 }
 
-void USelectorUtils::CookWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& RawConfigs, FCookedWeightsOrProbsConfig& OutCookedConfig)
+void USelectorUtils::CookSelectorDistribution(const TArray<FWeightOrProbEntry>& Entries, FCookedSelectorDistribution& OutDistribution)
 {
-	const int32 Num = RawConfigs.Num();
+	const int32 Num = Entries.Num();
 
-	OutCookedConfig.CumWeightsOrCumProbs.SetNum(Num);
+	OutDistribution.CumWeightsOrCumProbs.SetNum(Num);
 	double SumWeight = 0.0;
 	double SumProb = 0.0;
 
 	for (int32 Idx = 0; Idx < Num; Idx++)
 	{
-		if (RawConfigs[Idx].IsProb)
+		if (Entries[Idx].IsProb)
 		{
-			SumProb += FMath::Max(RawConfigs[Idx].WeightOrProb, 0.0);
+			SumProb += FMath::Max(Entries[Idx].WeightOrProb, 0.0);
 		}
 		else
 		{
-			SumWeight += FMath::Max(RawConfigs[Idx].WeightOrProb, 0.0);
+			SumWeight += FMath::Max(Entries[Idx].WeightOrProb, 0.0);
 		}
 	}
 
 	if (SumProb == 0.0)  // pure weights
 	{
-		OutCookedConfig.IsProbs = false;
+		OutDistribution.IsProbs = false;
 		SumWeight = 0.0;
 		for (int32 Idx = 0; Idx < Num; Idx++)
 		{
-			if (!RawConfigs[Idx].IsProb)
+			if (!Entries[Idx].IsProb)
 			{
-				SumWeight += FMath::Max(RawConfigs[Idx].WeightOrProb, 0.0);
+				SumWeight += FMath::Max(Entries[Idx].WeightOrProb, 0.0);
 			}
-			OutCookedConfig.CumWeightsOrCumProbs[Idx] = SumWeight;
+			OutDistribution.CumWeightsOrCumProbs[Idx] = SumWeight;
 		}
 	}
 	else if (SumWeight == 0.0 || 1.0 - SumProb < 1e-6)  // pure probabilities
 	{
-		OutCookedConfig.IsProbs = true;
+		OutDistribution.IsProbs = true;
 		SumProb = 0.0;
 		for (int32 Idx = 0; Idx < Num; Idx++)
 		{
-			if (RawConfigs[Idx].IsProb)
+			if (Entries[Idx].IsProb)
 			{
-				SumProb += FMath::Max(RawConfigs[Idx].WeightOrProb, 0.0);
+				SumProb += FMath::Max(Entries[Idx].WeightOrProb, 0.0);
 			}
 			// Note: don't do cut off here, as we do not make much assumptions on how the result would be used
-			OutCookedConfig.CumWeightsOrCumProbs[Idx] = SumProb;
+			OutDistribution.CumWeightsOrCumProbs[Idx] = SumProb;
 		}
 	}
 	else  // mixture: convert to weights
 	{
-		OutCookedConfig.IsProbs = false;
+		OutDistribution.IsProbs = false;
 		const double WeightFactor = SumWeight / (1.0 - SumProb);
 		SumWeight = 0.0;
 		for (int32 Idx = 0; Idx < Num; Idx++)
 		{
-			if (RawConfigs[Idx].IsProb)
+			if (Entries[Idx].IsProb)
 			{
-				SumWeight += FMath::Max(RawConfigs[Idx].WeightOrProb, 0.0) * WeightFactor;
+				SumWeight += FMath::Max(Entries[Idx].WeightOrProb, 0.0) * WeightFactor;
 			}
 			else
 			{
-				SumWeight += FMath::Max(RawConfigs[Idx].WeightOrProb, 0.0);
+				SumWeight += FMath::Max(Entries[Idx].WeightOrProb, 0.0);
 			}
-			OutCookedConfig.CumWeightsOrCumProbs[Idx] = SumWeight;
+			OutDistribution.CumWeightsOrCumProbs[Idx] = SumWeight;
 		}
 	}
 }
@@ -152,24 +152,24 @@ int32 USelectorUtils::BPFunc_SelectWithProbsFromStream(const TArray<double>& Pro
 	return SelectWithProbs(Probs, &Stream);
 }
 
-int32 USelectorUtils::BPFunc_SelectWithCookedWeightsOrProbsConfig(const FCookedWeightsOrProbsConfig& CookedConfig)
+int32 USelectorUtils::BPFunc_SelectWithCookedDistribution(const FCookedSelectorDistribution& Distribution)
 {
-	return SelectWithCookedWeightsOrProbsConfig(CookedConfig);
+	return SelectWithCookedDistribution(Distribution);
 }
 
-int32 USelectorUtils::BPFunc_SelectWithCookedWeightsOrProbsConfigFromStream(const FCookedWeightsOrProbsConfig& CookedConfig, FRandomStream& Stream)
+int32 USelectorUtils::BPFunc_SelectWithCookedDistributionFromStream(const FCookedSelectorDistribution& Distribution, FRandomStream& Stream)
 {
-	return SelectWithCookedWeightsOrProbsConfig(CookedConfig, &Stream);
+	return SelectWithCookedDistribution(Distribution, &Stream);
 }
 
-int32 USelectorUtils::BPFunc_SelectWithWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& RawConfigs)
+int32 USelectorUtils::BPFunc_SelectWithWeightOrProbEntries(const TArray<FWeightOrProbEntry>& Entries)
 {
-	return SelectWithWeightOrProbConfigs(RawConfigs);
+	return SelectWithWeightOrProbEntries(Entries);
 }
 
-int32 USelectorUtils::BPFunc_SelectWithWeightOrProbConfigsFromStream(const TArray<FWeightOrProbConfig>& RawConfigs, FRandomStream& Stream)
+int32 USelectorUtils::BPFunc_SelectWithWeightOrProbEntriesFromStream(const TArray<FWeightOrProbEntry>& Entries, FRandomStream& Stream)
 {
-	return SelectWithWeightOrProbConfigs(RawConfigs, &Stream);
+	return SelectWithWeightOrProbEntries(Entries, &Stream);
 }
 
 int32 USelectorUtils::SelectWithCumWeights(const TArray<double>& CumWeights, FRandomStream* Stream)
@@ -255,18 +255,18 @@ int32 USelectorUtils::SelectWithProbs(const TArray<double>& Probs, FRandomStream
 	return SelectWithCumProbsHelper(CumProbs, Num, Stream);
 }
 
-int32 USelectorUtils::SelectWithCookedWeightsOrProbsConfig(const FCookedWeightsOrProbsConfig& CookedConfig, FRandomStream* Stream)
+int32 USelectorUtils::SelectWithCookedDistribution(const FCookedSelectorDistribution& Distribution, FRandomStream* Stream)
 {
-	if (CookedConfig.IsProbs)
+	if (Distribution.IsProbs)
 	{
-		return SelectWithCumProbs(CookedConfig.CumWeightsOrCumProbs, Stream);
+		return SelectWithCumProbs(Distribution.CumWeightsOrCumProbs, Stream);
 	}
-	return SelectWithCumWeights(CookedConfig.CumWeightsOrCumProbs, Stream);
+	return SelectWithCumWeights(Distribution.CumWeightsOrCumProbs, Stream);
 }
 
-int32 USelectorUtils::SelectWithWeightOrProbConfigs(const TArray<FWeightOrProbConfig>& RawConfigs, FRandomStream* Stream)
+int32 USelectorUtils::SelectWithWeightOrProbEntries(const TArray<FWeightOrProbEntry>& Entries, FRandomStream* Stream)
 {
-	int32 Num = RawConfigs.Num();
+	int32 Num = Entries.Num();
 	if (Num == 0)
 	{
 		return -1;
@@ -276,13 +276,13 @@ int32 USelectorUtils::SelectWithWeightOrProbConfigs(const TArray<FWeightOrProbCo
 	double SumProb = 0.0;
 	for (int32 Idx = 0; Idx < Num; Idx++)
 	{
-		if (RawConfigs[Idx].IsProb)
+		if (Entries[Idx].IsProb)
 		{
-			SumProb += FMath::Max(RawConfigs[Idx].WeightOrProb, 0.0);
+			SumProb += FMath::Max(Entries[Idx].WeightOrProb, 0.0);
 		}
 		else
 		{
-			SumWeight += FMath::Max(RawConfigs[Idx].WeightOrProb, 0.0);
+			SumWeight += FMath::Max(Entries[Idx].WeightOrProb, 0.0);
 		}
 	}
 
@@ -299,9 +299,9 @@ int32 USelectorUtils::SelectWithWeightOrProbConfigs(const TArray<FWeightOrProbCo
 		CumWeights.SetNum(Num);
 		for (int32 Idx = 0; Idx < Num; Idx++)
 		{
-			if (!RawConfigs[Idx].IsProb)
+			if (!Entries[Idx].IsProb)
 			{
-				SumWeight += FMath::Max(RawConfigs[Idx].WeightOrProb, 0.0);
+				SumWeight += FMath::Max(Entries[Idx].WeightOrProb, 0.0);
 			}
 			CumWeights[Idx] = SumWeight;
 		}
@@ -316,9 +316,9 @@ int32 USelectorUtils::SelectWithWeightOrProbConfigs(const TArray<FWeightOrProbCo
 		CumProbs.SetNum(Num);
 		for (int32 Idx = 0; Idx < Num; Idx++)
 		{
-			if (RawConfigs[Idx].IsProb)
+			if (Entries[Idx].IsProb)
 			{
-				SumProb += FMath::Max(RawConfigs[Idx].WeightOrProb, 0.0);
+				SumProb += FMath::Max(Entries[Idx].WeightOrProb, 0.0);
 			}
 			CumProbs[Idx] = SumProb;
 			if (Idx < Num - 1 && SumProb >= 1.0)  // cut off at cum prob of 1.0
@@ -338,13 +338,13 @@ int32 USelectorUtils::SelectWithWeightOrProbConfigs(const TArray<FWeightOrProbCo
 	CumWeights.SetNum(Num);
 	for (int32 Idx = 0; Idx < Num; Idx++)
 	{
-		if (RawConfigs[Idx].IsProb)
+		if (Entries[Idx].IsProb)
 		{
-			SumWeight += FMath::Max(RawConfigs[Idx].WeightOrProb, 0.0) * WeightFactor;
+			SumWeight += FMath::Max(Entries[Idx].WeightOrProb, 0.0) * WeightFactor;
 		}
 		else
 		{
-			SumWeight += FMath::Max(RawConfigs[Idx].WeightOrProb, 0.0);
+			SumWeight += FMath::Max(Entries[Idx].WeightOrProb, 0.0);
 		}
 		CumWeights[Idx] = SumWeight;
 	}

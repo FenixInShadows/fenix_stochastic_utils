@@ -3,6 +3,7 @@
 
 #include "SelectorUtils.h"
 #include "CommonUtils.h"
+#include "Engine/DataTable.h"
 
 //URandomSelector* USelectorUtils::CreateRandomSelector(const FRandomSelectorConfig& Config)
 //{
@@ -106,6 +107,34 @@ void USelectorUtils::CookSelectorDistribution(const TArray<FWeightOrProbEntry>& 
 				SumWeight += FMath::Max(Entries[Idx].WeightOrProb, 0.0);
 			}
 			OutDistribution.CumWeightsOrCumProbs[Idx] = SumWeight;
+		}
+	}
+}
+
+void USelectorUtils::GetWeightOrProbEntriesFromDataTable(const UDataTable* DataTable, TArray<FWeightOrProbEntry>& OutEntries, FName IsProbPropertyName, FName WeightOrProbPropertyName)
+{
+	OutEntries.Empty();
+	if (DataTable && IsProbPropertyName != NAME_None && WeightOrProbPropertyName != NAME_None)
+	{
+		const FProperty* IsProbColumnProperty = DataTable->FindTableProperty(IsProbPropertyName);
+		const FProperty* WeightOrProbColumnProperty = DataTable->FindTableProperty(WeightOrProbPropertyName);
+		if (IsProbColumnProperty && WeightOrProbColumnProperty)
+		{
+			const FBoolProperty* IsProbBoolProperty = CastField<FBoolProperty>(IsProbColumnProperty);
+			const FNumericProperty* WeightOrProbNumericProperty = CastField<FNumericProperty>(WeightOrProbColumnProperty);
+			if (IsProbBoolProperty && WeightOrProbNumericProperty)
+			{
+				for (auto RowIt = DataTable->GetRowMap().CreateConstIterator(); RowIt; ++RowIt)
+				{
+					uint8* RowData = RowIt.Value();
+					FWeightOrProbEntry Entry =
+					{
+						IsProbBoolProperty->GetPropertyValue_InContainer(RowData),
+						UCommonUtils::GetFloatingPointPropertyValue_InContainer(WeightOrProbNumericProperty, RowData)
+					};
+					OutEntries.Add(Entry);
+				}
+			}
 		}
 	}
 }

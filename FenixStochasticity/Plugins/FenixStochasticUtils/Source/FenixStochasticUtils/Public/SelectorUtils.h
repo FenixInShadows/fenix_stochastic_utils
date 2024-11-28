@@ -61,7 +61,7 @@ public: // Blueprint and C++ APIs
 	* Parameter ValueLowerClamp is used for clamping at the lower bounds of each of the values before being cumulated (e.g. regard weights or probabilities as zeros).
 	* Best used on cases those original values do not change. Needs remake to update with the change on the original values.
 	*/
-	UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = 2))
+	UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = 2), Category = "Fenix|SelectorUtils|SelectionPreprocessing")
 	static void MakeCumulatives(const TArray<double>& Values, TArray<double>& OutCumulatives, double ValueLowerClamp = 0.0);
 
 	/**
@@ -71,7 +71,7 @@ public: // Blueprint and C++ APIs
 	* Due to possible cut off, the output array may be shorter than the input array. 
 	* Best used on cases those original values do not change. Needs remake to update with the change on the original values.
 	*/
-	UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = 2))
+	UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = 2), Category = "Fenix|SelectorUtils|SelectionPreprocessing")
 	static void MakeCumulativesWithCutoff(const TArray<double>& Values, TArray<double>& OutCumulatives, double ValueLowerClamp = 0.0, double TotalCutoff = 1.0);
 
 	/**
@@ -80,30 +80,34 @@ public: // Blueprint and C++ APIs
 	* The result is represented as probabilities if there are no weight entries or the total from probability entries adds up to no less than 1.0, otherwise reprenented as weights.
 	* Best used on cases where the WeightOrProbEntry's do not change. Needs remake when they get changed.
 	*/
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, Category = "Fenix|SelectorUtils|SelectionPreprocessing")
 	static void CookSelectorDistribution(const TArray<FWeightOrProbEntry>& Entries, FCookedSelectorDistribution& OutDistribution);
+
+	/** Get an array of FWeightOrProbEntry's from a data table. */
+	UFUNCTION(BlueprintCallable, Category = "Fenix|SelectorUtils|DataTable")
+	static void GetWeightOrProbEntriesFromDataTable(const UDataTable* DataTable, TArray<FWeightOrProbEntry>& OutEntries, FName IsProbPropertyName = "IsProb", FName WeightOrProbPropertyName = "WeightOrProb");
 
 private: // Blueprint only APIs
 	/**
 	* Select index with given cumulative weights, negative returning value means failure. Not thread safe.
 	* Require input non-negative and non-decreasing.
 	*/
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Cum Weights", NotBlueprintThreadSafe))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Cum Weights", NotBlueprintThreadSafe), Category = "Fenix|SelectorUtils|Selection")
 	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithCumWeights(const TArray<double>& CumWeights);
 
 	/**
 	* Select index with given cumulative weights and a random stream (can be seeded), negative returning value means failure.
 	* Require input non-negative and non-decreasing.
 	*/
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Cum Weights From Stream"))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Cum Weights From Stream"), Category = "Fenix|SelectorUtils|Selection")
 	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithCumWeightsFromStream(const TArray<double>& CumWeights, UPARAM(ref) FRandomStream& Stream);
 
 	/** Select index with given weights, negative returning value means failure. Not thread safe.*/
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Weights", NotBlueprintThreadSafe))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Weights", NotBlueprintThreadSafe), Category = "Fenix|SelectorUtils|Selection")
 	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithWeights(const TArray<double>& Weights);
 
 	/** Select index with given weights and a random stream (can be seeded), negative returning value means failure. */
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Weights From Stream"))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Weights From Stream"), Category = "Fenix|SelectorUtils|Selection")
 	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithWeightsFromStream(const TArray<double>& Weights, UPARAM(ref) FRandomStream& Stream);
 
 	/**
@@ -112,7 +116,7 @@ private: // Blueprint only APIs
 	* If the total is not enough, then when it rolls outside it counts as failure.
 	* Require input non-negative and non-decreasing.
 	*/
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Cum Probs", NotBlueprintThreadSafe))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Cum Probs", NotBlueprintThreadSafe), Category = "Fenix|SelectorUtils|Selection")
 	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithCumProbs(const TArray<double>& CumProbs);
 
 	/**
@@ -121,7 +125,7 @@ private: // Blueprint only APIs
 	* If the total is not enough, then when it rolls outside it counts as failure.
 	* Require input non-negative and non-decreasing.
 	*/
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Cum Probs From Stream"))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Cum Probs From Stream"), Category = "Fenix|SelectorUtils|Selection")
 	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithCumProbsFromStream(const TArray<double>& CumProbs, UPARAM(ref) FRandomStream& Stream);
 	
 	/**
@@ -129,7 +133,7 @@ private: // Blueprint only APIs
 	* Cut off or padded at the end to a cumulative probability of 1.0 if the total is more.
 	* If the total is not enough, then when it rolls outside it counts as failure.
 	*/
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Probs", NotBlueprintThreadSafe))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Probs", NotBlueprintThreadSafe), Category = "Fenix|SelectorUtils|Selection")
 	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithProbs(const TArray<double>& Probs);
 
 	/**
@@ -137,7 +141,7 @@ private: // Blueprint only APIs
 	* Cut off or padded at the end to a cumulative probability of 1.0 if the total is more.
 	* If the total is not enough, then when it rolls outside it counts as failure.
 	*/
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Probs From Stream"))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With Probs From Stream"), Category = "Fenix|SelectorUtils|Selection")
 	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithProbsFromStream(const TArray<double>& Probs, UPARAM(ref) FRandomStream& Stream);
 
 	/**
@@ -146,7 +150,7 @@ private: // Blueprint only APIs
 	* If the input is probabilities and and the total is not enough, then when it rolls outside it counts as failure.
 	* Require input weights or probs non-negative and non-decreasing.
 	*/
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With CookedDistribution", NotBlueprintThreadSafe))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With CookedDistribution", NotBlueprintThreadSafe), Category = "Fenix|SelectorUtils|Selection")
 	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithCookedDistribution(const FCookedSelectorDistribution& Distribution);
 
 	/**
@@ -155,7 +159,7 @@ private: // Blueprint only APIs
 	* If the input is probabilities and and the total is not enough, then when it rolls outside it counts as failure.
 	* Require input weights or probs non-negative and non-decreasing.
 	*/
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With CookedDistribution From Stream"))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With CookedDistribution From Stream"), Category = "Fenix|SelectorUtils|Selection")
 	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithCookedDistributionFromStream(const FCookedSelectorDistribution& Distribution, UPARAM(ref) FRandomStream& Stream);
 
 	/**
@@ -164,7 +168,7 @@ private: // Blueprint only APIs
 	* Probability entries are cut off at the end to a cumulative probability of 1.0 if the total is more.
 	* If all positive entries are probabilities and the total is not enough, then when it rolls outside it counts as failure.
 	*/
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With WeightOrProbEntries", NotBlueprintThreadSafe))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With WeightOrProbEntries", NotBlueprintThreadSafe), Category = "Fenix|SelectorUtils|Selection")
 	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithWeightOrProbEntries(const TArray<FWeightOrProbEntry>& Entries);
 
 	/**
@@ -173,7 +177,7 @@ private: // Blueprint only APIs
 	* Probability entries are cut off at the end to a cumulative probability of 1.0 if the total is more.
 	* If all positive entries are probabilities and the total is not enough, then when it rolls outside it counts as failure.
 	*/
-	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With WeightOrProbEntries From Stream"))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "Select With WeightOrProbEntries From Stream"), Category = "Fenix|SelectorUtils|Selection")
 	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithWeightOrProbEntriesFromStream(const TArray<FWeightOrProbEntry>& Entries, UPARAM(ref) FRandomStream& Stream);
 
 public:  // C++ only APIs

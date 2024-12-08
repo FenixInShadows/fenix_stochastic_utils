@@ -38,6 +38,9 @@ public class FenixStochasticUtils : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+                "KismetCompiler",
+                "BlueprintGraph",
+                "UnrealEd",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

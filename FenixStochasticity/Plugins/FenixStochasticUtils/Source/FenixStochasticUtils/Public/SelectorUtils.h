@@ -1,4 +1,4 @@
-// Copyright 2024, Tiannan Chen, All rights reserved.
+// Copyright 2025, Tiannan Chen, All rights reserved.
 
 #pragma once
 
@@ -17,13 +17,13 @@ struct FENIXSTOCHASTICUTILS_API FWeightOrProbEntry
 {
 	GENERATED_BODY()
 
-	/** Whether it records probability (as opposed to weight). */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool IsProb = false;
-
 	/** Weight or probability value. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	double WeightOrProb = 1.0;
+
+	/** Whether it records probability (as opposed to weight). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool IsProb = false;
 };
 
 /**
@@ -34,13 +34,13 @@ struct FENIXSTOCHASTICUTILS_API FCookedSelectorDistribution
 {
 	GENERATED_BODY()
 
-	/** Whether it records probabilities (as opposed to weights). */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool IsProbs = false;
-
 	/** Weight or probability array. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<double> CumWeightsOrCumProbs = { 1.0 };
+
+	/** Whether it records probabilities (as opposed to weights). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool IsProbs = false;
 };
 
 /**
@@ -85,7 +85,7 @@ public: // Blueprint and C++ APIs
 
 	/** Get an array of FWeightOrProbEntry's from a data table. */
 	UFUNCTION(BlueprintCallable, Category = "Fenix|SelectorUtils|DataTable")
-	static void GetWeightOrProbEntriesFromDataTable(const UDataTable* DataTable, TArray<FWeightOrProbEntry>& OutEntries, FName IsProbPropertyName = "IsProb", FName WeightOrProbPropertyName = "WeightOrProb");
+	static void GetWeightOrProbEntriesFromDataTable(const UDataTable* DataTable, TArray<FWeightOrProbEntry>& OutEntries, FName WeightOrProbPropertyName = "WeightOrProb", FName IsProbPropertyName = "IsProb");
 
 private: // Blueprint only APIs
 	/**

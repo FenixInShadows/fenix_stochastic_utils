@@ -1,4 +1,4 @@
-// Copyright 2024, Tiannan Chen, All rights reserved.
+// Copyright 2025, Tiannan Chen, All rights reserved.
 
 
 #include "SelectorUtils.h"
@@ -111,26 +111,26 @@ void USelectorUtils::CookSelectorDistribution(const TArray<FWeightOrProbEntry>& 
 	}
 }
 
-void USelectorUtils::GetWeightOrProbEntriesFromDataTable(const UDataTable* DataTable, TArray<FWeightOrProbEntry>& OutEntries, FName IsProbPropertyName, FName WeightOrProbPropertyName)
+void USelectorUtils::GetWeightOrProbEntriesFromDataTable(const UDataTable* DataTable, TArray<FWeightOrProbEntry>& OutEntries, FName WeightOrProbPropertyName, FName IsProbPropertyName)
 {
 	OutEntries.Empty();
-	if (DataTable && IsProbPropertyName != NAME_None && WeightOrProbPropertyName != NAME_None)
+	if (DataTable && WeightOrProbPropertyName != NAME_None && IsProbPropertyName != NAME_None)
 	{
-		const FProperty* IsProbColumnProperty = DataTable->FindTableProperty(IsProbPropertyName);
 		const FProperty* WeightOrProbColumnProperty = DataTable->FindTableProperty(WeightOrProbPropertyName);
-		if (IsProbColumnProperty && WeightOrProbColumnProperty)
+		const FProperty* IsProbColumnProperty = DataTable->FindTableProperty(IsProbPropertyName);
+		if (WeightOrProbColumnProperty && IsProbColumnProperty)
 		{
-			const FBoolProperty* IsProbBoolProperty = CastField<FBoolProperty>(IsProbColumnProperty);
 			const FNumericProperty* WeightOrProbNumericProperty = CastField<FNumericProperty>(WeightOrProbColumnProperty);
-			if (IsProbBoolProperty && WeightOrProbNumericProperty)
+			const FBoolProperty* IsProbBoolProperty = CastField<FBoolProperty>(IsProbColumnProperty);
+			if (WeightOrProbNumericProperty && IsProbBoolProperty)
 			{
 				for (auto RowIt = DataTable->GetRowMap().CreateConstIterator(); RowIt; ++RowIt)
 				{
 					uint8* RowData = RowIt.Value();
 					FWeightOrProbEntry Entry =
 					{
-						IsProbBoolProperty->GetPropertyValue_InContainer(RowData),
-						UCommonUtils::GetFloatingPointPropertyValue_InContainer(WeightOrProbNumericProperty, RowData)
+						UCommonUtils::GetFloatingPointPropertyValue_InContainer(WeightOrProbNumericProperty, RowData),
+						IsProbBoolProperty->GetPropertyValue_InContainer(RowData)
 					};
 					OutEntries.Add(Entry);
 				}

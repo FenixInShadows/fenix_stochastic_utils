@@ -1,4 +1,4 @@
-// Copyright 2024, Tiannan Chen, All rights reserved.
+// Copyright 2025, Tiannan Chen, All rights reserved.
 
 #pragma once
 
@@ -6,13 +6,21 @@
 #include "K2Node.h"
 #include "K2Node_CookSelectorInput.generated.h"
 
+
+UENUM(BlueprintType)
+enum class EFenixCookSelectorInputDataType : uint8
+{
+	Weight = 0,
+	Prob = 1,
+	WeightOrProb = 2
+};
+
 UENUM(BlueprintType)
 enum class EFenixCookSelectorInputFormat : uint8
 {
-	Basic = 0,
-	Array = 1,
-	Set = 2,
-	Map = 3
+	Array = 0,
+	Map = 1,
+	DataTable = 2
 };
 
 /**
@@ -39,23 +47,31 @@ class FENIXSTOCHASTICUTILS_API UK2Node_CookSelectorInput : public UK2Node
 
 	virtual void ExpandNode(FKismetCompilerContext& CompilerContext, UEdGraph* SourceGraph) override;
 
-	virtual void PinDefaultValueChanged(UEdGraphPin* ChangedPin) override;
-
 	virtual void AllocateDefaultPins() override;
-
-	FText GetCurrentTooltip() const;
-
-	void OnInputFormatUpdated();
-
-	void RemoveInOutPins();
+	
+	virtual void PinDefaultValueChanged(UEdGraphPin* ChangedPin) override;
 
 	void CreateInOutPins();
 
-	UEdGraphPin* GetInputFormatPin();
+	void OnDataTypePinUpdated(const EFenixCookSelectorInputDataType NewDataType);
+
+	void OnFormatPinUpdated(const EFenixCookSelectorInputFormat NewFormat);
+
+	FText GetCurrentTooltip() const;
+
+	UEdGraphPin* GetDataTypePin();
+
+	UEdGraphPin* GetFormatPin();
 
 	UEdGraphPin* GetInputPin();
 
+	UEdGraphPin* GetInputDataTableWeightOrProbNamePin();
+	
+	UEdGraphPin* GetInputDataTableIsProbNamePin();
+
 	UEdGraphPin* GetOutputPin();
+
+	UEdGraphPin* GetOutputKeysPin();
 
 	UFUNCTION(BlueprintPure, meta = (BlueprintInternalUseOnly = "true"))
 	static int32 TestK2Basic(const int32 InputInt);
@@ -70,7 +86,10 @@ class FENIXSTOCHASTICUTILS_API UK2Node_CookSelectorInput : public UK2Node
 	static TMap<int32, FString> TestK2Map(const TMap<int32, FString> InputMap);
 
 	UPROPERTY()
-	EFenixCookSelectorInputFormat CurrentInputFormat = EFenixCookSelectorInputFormat::Basic;
+	EFenixCookSelectorInputDataType CurrentDataType = EFenixCookSelectorInputDataType::Weight;
+
+	UPROPERTY()
+	EFenixCookSelectorInputFormat CurrentFormat = EFenixCookSelectorInputFormat::Array;
 
 	FNodeTextCache CachedToolTip;
 };

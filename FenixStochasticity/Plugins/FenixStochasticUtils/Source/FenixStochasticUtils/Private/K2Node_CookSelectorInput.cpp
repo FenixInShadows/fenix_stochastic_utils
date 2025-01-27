@@ -111,6 +111,8 @@ void UK2Node_CookSelectorInput::AllocateDefaultPins()
 
 void UK2Node_CookSelectorInput::PinDefaultValueChanged(UEdGraphPin* ChangedPin)
 {
+	Super::PinDefaultValueChanged(ChangedPin);
+
 	if (ChangedPin == GetDataTypePin())
 	{
 		UEnum* DataTypeTypeObject = FindObjectChecked<UEnum>(ANY_PACKAGE, TEXT("EFenixCookSelectorInputDataType"), true);
@@ -125,9 +127,45 @@ void UK2Node_CookSelectorInput::PinDefaultValueChanged(UEdGraphPin* ChangedPin)
 	}
 }
 
+void UK2Node_CookSelectorInput::PinConnectionListChanged(UEdGraphPin* Pin)
+{
+	Super::PinConnectionListChanged(Pin);
+
+	if (CurrentFormat == EFenixCookSelectorInputFormat::Map)
+	{
+		UEdGraphPin* InputPin = GetInputPin();
+		UEdGraphPin* OutputKeysPin = GetOutputKeysPin();
+		if (Pin == InputPin)
+		{
+			OnPinConnectionUpdateInMapFormat(InputPin, OutputKeysPin);
+		}
+		else if (Pin == OutputKeysPin)
+		{
+			OnPinConnectionUpdateInMapFormat(OutputKeysPin, InputPin);
+		}
+	}
+}
+
+void UK2Node_CookSelectorInput::PostReconstructNode()
+{
+	Super::PostReconstructNode();
+
+	// Redo wildcard type-matching after reconstruction
+	if (CurrentFormat == EFenixCookSelectorInputFormat::Map)
+	{
+		UEdGraphPin* InputPin = GetInputPin();
+		UEdGraphPin* OutputKeysPin = GetOutputKeysPin();
+		const bool updated = PostPinConnectionReconstructionInMapFormat(InputPin, OutputKeysPin);
+		if (!updated)
+		{
+			PostPinConnectionReconstructionInMapFormat(OutputKeysPin, InputPin);
+		}
+	}
+}
+
 void UK2Node_CookSelectorInput::CreateInOutPins()
 {
-	// Input Pins
+	// Input pins
 	FCreatePinParams InPinParams;
 	switch (CurrentFormat)
 	{
@@ -185,7 +223,7 @@ void UK2Node_CookSelectorInput::CreateInOutPins()
 		break;		
 	}
 
-	// Output Pins
+	// Output pins
 	FCreatePinParams OutPinParams;
 	switch (CurrentDataType)
 	{
@@ -216,10 +254,10 @@ void UK2Node_CookSelectorInput::CreateInOutPins()
 
 void UK2Node_CookSelectorInput::OnDataTypePinUpdated(const EFenixCookSelectorInputDataType NewDataType)
 {
-	// Input Pins
+	// Input pins
 	UEdGraphPin* InputPin = GetInputPin();
+	UEdGraphPin* InputDataTableWeightOrProbNamePin = GetInputDataTableWeightOrProbNamePin();
 	UEdGraphPin* InputDataTableIsProbNamePin = GetInputDataTableIsProbNamePin();
-	FEdGraphTerminalType TerminalType;
 	switch (CurrentFormat)
 	{
 	case EFenixCookSelectorInputFormat::Array:
@@ -227,15 +265,15 @@ void UK2Node_CookSelectorInput::OnDataTypePinUpdated(const EFenixCookSelectorInp
 		{
 		case EFenixCookSelectorInputDataType::Weight:
 			InputPin->PinName = PIN_NAME_WEIGHTS;
-			InputPin->PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Real, UEdGraphSchema_K2::PC_Double, nullptr, EPinContainerType::Array, false, TerminalType);
+			ChangePinCategoryToDouble(InputPin->PinType);
 			break;
 		case EFenixCookSelectorInputDataType::Prob:
 			InputPin->PinName = PIN_NAME_PROBS;
-			InputPin->PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Real, UEdGraphSchema_K2::PC_Double, nullptr, EPinContainerType::Array, false, TerminalType);
+			ChangePinCategoryToDouble(InputPin->PinType);
 			break;
 		case EFenixCookSelectorInputDataType::WeightOrProb:
 			InputPin->PinName = PIN_NAME_WEIGHT_OR_PROBS;
-			InputPin->PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Struct, NAME_None, FWeightOrProbEntry::StaticStruct(), EPinContainerType::Array, false, TerminalType);
+			ChangePinCategoryToWeightOrProbEntry(InputPin->PinType);
 			break;
 		}
 		break;
@@ -244,41 +282,37 @@ void UK2Node_CookSelectorInput::OnDataTypePinUpdated(const EFenixCookSelectorInp
 		{
 		case EFenixCookSelectorInputDataType::Weight:
 			InputPin->PinName = PIN_NAME_WEIGHT_MAP;
-			TerminalType.TerminalCategory = UEdGraphSchema_K2::PC_Real;
-			TerminalType.TerminalSubCategory = UEdGraphSchema_K2::PC_Double;
+			ChangePinValueCategoryToDouble(InputPin->PinType.PinValueType);
 			break;
 		case EFenixCookSelectorInputDataType::Prob:
 			InputPin->PinName = PIN_NAME_PROB_MAP;
-			TerminalType.TerminalCategory = UEdGraphSchema_K2::PC_Real;
-			TerminalType.TerminalSubCategory = UEdGraphSchema_K2::PC_Double;
+			ChangePinValueCategoryToDouble(InputPin->PinType.PinValueType);
 			break;
 		case EFenixCookSelectorInputDataType::WeightOrProb:
 			InputPin->PinName = PIN_NAME_WEIGHT_OR_PROB_MAP;
-			TerminalType.TerminalCategory = UEdGraphSchema_K2::PC_Struct;
-			TerminalType.TerminalSubCategoryObject = FWeightOrProbEntry::StaticStruct();
+			ChangePinValueCategoryToWeightOrProbEntry(InputPin->PinType.PinValueType);
 			break;
 		}
-		InputPin->PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Wildcard, NAME_None, nullptr, EPinContainerType::Map, false, TerminalType);
 		break;
 	case EFenixCookSelectorInputFormat::DataTable:
 		switch (NewDataType)
 		{
 		case EFenixCookSelectorInputDataType::Weight:
-			GetInputDataTableWeightOrProbNamePin()->PinName = PIN_NAME_WEIGHT_PROPERTY_NAME;
+			InputDataTableWeightOrProbNamePin->PinName = PIN_NAME_WEIGHT_PROPERTY_NAME;
 			if (InputDataTableIsProbNamePin)
 			{
 				RemovePin(InputDataTableIsProbNamePin);
 			}
 			break;
 		case EFenixCookSelectorInputDataType::Prob:
-			GetInputDataTableWeightOrProbNamePin()->PinName = PIN_NAME_PROB_PROPERTY_NAME;
+			InputDataTableWeightOrProbNamePin->PinName = PIN_NAME_PROB_PROPERTY_NAME;
 			if (InputDataTableIsProbNamePin)
 			{
 				RemovePin(InputDataTableIsProbNamePin);
 			}
 			break;
 		case EFenixCookSelectorInputDataType::WeightOrProb:
-			GetInputDataTableWeightOrProbNamePin()->PinName = PIN_NAME_WEIGHT_OR_PROB_PROPERTY_NAME;
+			InputDataTableWeightOrProbNamePin->PinName = PIN_NAME_WEIGHT_OR_PROB_PROPERTY_NAME;
 			if (!InputDataTableIsProbNamePin)
 			{
 				CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, PIN_NAME_IS_PROB_PROPERTY_NAME);
@@ -288,40 +322,49 @@ void UK2Node_CookSelectorInput::OnDataTypePinUpdated(const EFenixCookSelectorInp
 		break;
 	}
 
-	// Output Pins
+	// Output pins
 	UEdGraphPin* OutputPin = GetOutputPin();
 	switch (NewDataType)
 	{
 	case EFenixCookSelectorInputDataType::Weight:
 		OutputPin->PinName = PIN_NAME_CUM_WEIGHTS;
-		OutputPin->PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Real, UEdGraphSchema_K2::PC_Double, nullptr, EPinContainerType::Array, false, FEdGraphTerminalType());
+		ChangePinTypeToDoubleArray(OutputPin->PinType);
 		break;
 	case EFenixCookSelectorInputDataType::Prob:
 		OutputPin->PinName = PIN_NAME_CUM_PROBS;
-		OutputPin->PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Real, UEdGraphSchema_K2::PC_Double, nullptr, EPinContainerType::Array, false, FEdGraphTerminalType());
+		ChangePinTypeToDoubleArray(OutputPin->PinType);
 		break;
 	case EFenixCookSelectorInputDataType::WeightOrProb:
 		OutputPin->PinName = PIN_NAME_COOKED_DISTRIBUTION;
-		OutputPin->PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Struct, NAME_None, FCookedSelectorDistribution::StaticStruct(), EPinContainerType::None, false, FEdGraphTerminalType());
+		ChangePinTypeToCookedSelectorDistribution(OutputPin->PinType);
 		break;
 	}
 
-	// Update Data Type Cache
+	// Update data type cache
 	CurrentDataType = NewDataType;
 
-	// Mark Dirty/Modified
+	// Mark dirty/modified
 	CachedToolTip.MarkDirty();
-	GetGraph()->NotifyGraphChanged();
 	FBlueprintEditorUtils::MarkBlueprintAsModified(GetBlueprint());
+	GetGraph()->NotifyGraphChanged();
+
+	// Refresh type related neighbor nodes
+	if (!InputPin->LinkedTo.IsEmpty())
+	{
+		InputPin->LinkedTo[0]->GetOwningNode()->ReconstructNode();
+	}
+	if (!OutputPin->LinkedTo.IsEmpty())
+	{
+		OutputPin->LinkedTo[0]->GetOwningNode()->ReconstructNode();
+	}
 }
 
 void UK2Node_CookSelectorInput::OnFormatPinUpdated(const EFenixCookSelectorInputFormat NewFormat)
 {
-	// Input Pins
+	// Input pins
 	UEdGraphPin* InputPin = GetInputPin();
 	UEdGraphPin* InputDataTableWeightOrProbNamePin = GetInputDataTableWeightOrProbNamePin();
 	UEdGraphPin* InputDataTableIsProbNamePin = GetInputDataTableIsProbNamePin();
-	FEdGraphTerminalType TerminalType;
 	switch (NewFormat)
 	{
 	case EFenixCookSelectorInputFormat::Array:
@@ -329,15 +372,15 @@ void UK2Node_CookSelectorInput::OnFormatPinUpdated(const EFenixCookSelectorInput
 		{
 		case EFenixCookSelectorInputDataType::Weight:
 			InputPin->PinName = PIN_NAME_WEIGHTS;
-			InputPin->PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Real, UEdGraphSchema_K2::PC_Double, nullptr, EPinContainerType::Array, false, TerminalType);
+			ChangePinTypeToDoubleArray(InputPin->PinType);
 			break;
 		case EFenixCookSelectorInputDataType::Prob:
 			InputPin->PinName = PIN_NAME_PROBS;
-			InputPin->PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Real, UEdGraphSchema_K2::PC_Double, nullptr, EPinContainerType::Array, false, TerminalType);
+			ChangePinTypeToDoubleArray(InputPin->PinType);
 			break;
 		case EFenixCookSelectorInputDataType::WeightOrProb:
 			InputPin->PinName = PIN_NAME_WEIGHT_OR_PROBS;
-			InputPin->PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Struct, NAME_None, FWeightOrProbEntry::StaticStruct(), EPinContainerType::Array, false, TerminalType);
+			ChangePinTypeToWeightOrProbArray(InputPin->PinType);
 			break;
 		}
 		if (InputDataTableWeightOrProbNamePin)
@@ -354,21 +397,17 @@ void UK2Node_CookSelectorInput::OnFormatPinUpdated(const EFenixCookSelectorInput
 		{
 		case EFenixCookSelectorInputDataType::Weight:
 			InputPin->PinName = PIN_NAME_WEIGHT_MAP;
-			TerminalType.TerminalCategory = UEdGraphSchema_K2::PC_Real;
-			TerminalType.TerminalSubCategory = UEdGraphSchema_K2::PC_Double;
+			ChangePinTypeToDoubleMap(InputPin->PinType);
 			break;
 		case EFenixCookSelectorInputDataType::Prob:
 			InputPin->PinName = PIN_NAME_PROB_MAP;
-			TerminalType.TerminalCategory = UEdGraphSchema_K2::PC_Real;
-			TerminalType.TerminalSubCategory = UEdGraphSchema_K2::PC_Double;
+			ChangePinTypeToDoubleMap(InputPin->PinType);
 			break;
 		case EFenixCookSelectorInputDataType::WeightOrProb:
 			InputPin->PinName = PIN_NAME_WEIGHT_OR_PROB_MAP;
-			TerminalType.TerminalCategory = UEdGraphSchema_K2::PC_Struct;
-			TerminalType.TerminalSubCategoryObject = FWeightOrProbEntry::StaticStruct();
+			ChangePinTypeToWeightOrProbMap(InputPin->PinType);
 			break;
 		}
-		InputPin->PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Wildcard, NAME_None, nullptr, EPinContainerType::Map, false, TerminalType);
 		if (InputDataTableWeightOrProbNamePin)
 		{
 			RemovePin(InputDataTableWeightOrProbNamePin);
@@ -380,7 +419,7 @@ void UK2Node_CookSelectorInput::OnFormatPinUpdated(const EFenixCookSelectorInput
 		break;
 	case EFenixCookSelectorInputFormat::DataTable:
 		InputPin->PinName = PIN_NAME_DATA_TABLE;
-		InputPin->PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Object, NAME_None, UDataTable::StaticClass(), EPinContainerType::None, false, TerminalType);
+		ChangePinTypeToDataTable(InputPin->PinType);
 		switch (CurrentDataType)
 		{
 		case EFenixCookSelectorInputDataType::Weight:
@@ -409,10 +448,10 @@ void UK2Node_CookSelectorInput::OnFormatPinUpdated(const EFenixCookSelectorInput
 		break;
 	}
 
-	// Output Pins
+	// Output pins
 	UEdGraphPin* OutputKeysPin = GetOutputKeysPin();
-	FCreatePinParams OutPinParams;
-	OutPinParams.ContainerType = EPinContainerType::Array;
+	FCreatePinParams OutKeysPinParams;
+	OutKeysPinParams.ContainerType = EPinContainerType::Array;
 	switch (NewFormat)
 	{
 	case EFenixCookSelectorInputFormat::Array:
@@ -424,34 +463,229 @@ void UK2Node_CookSelectorInput::OnFormatPinUpdated(const EFenixCookSelectorInput
 	case EFenixCookSelectorInputFormat::Map:
 		if (!OutputKeysPin)
 		{
-			CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Wildcard, PIN_NAME_KEYS, OutPinParams);
+			CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Wildcard, PIN_NAME_KEYS, OutKeysPinParams);
 		}
 		else
 		{
 			OutputKeysPin->PinName = PIN_NAME_KEYS;
-			OutputKeysPin->PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Wildcard, NAME_None, nullptr, EPinContainerType::Array, false, FEdGraphTerminalType());
+			if (OutputKeysPin->LinkedTo.IsEmpty())
+			{
+				ChangePinCategoryToWildcard(OutputKeysPin->PinType);
+			}
 		}
 		break;
 	case EFenixCookSelectorInputFormat::DataTable:
 		if (!OutputKeysPin)
 		{
-			CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Name, PIN_NAME_ROW_NAMES, OutPinParams);
+			CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Name, PIN_NAME_ROW_NAMES, OutKeysPinParams);
 		}
 		else
 		{
 			OutputKeysPin->PinName = PIN_NAME_ROW_NAMES;
-			OutputKeysPin->PinType = FEdGraphPinType(UEdGraphSchema_K2::PC_Name, NAME_None, nullptr, EPinContainerType::Array, false, FEdGraphTerminalType());
+			ChangePinCategoryToName(OutputKeysPin->PinType);
 		}
 		break;
 	}
 	
-	// Update Format Cache
+	// Update format cache
 	CurrentFormat = NewFormat;
 
-	// Mark Dirty/Modified
+	// Mark dirty/modified
 	CachedToolTip.MarkDirty();
-	GetGraph()->NotifyGraphChanged();
 	FBlueprintEditorUtils::MarkBlueprintAsModified(GetBlueprint());
+	GetGraph()->NotifyGraphChanged();
+
+	// Refresh type related neighbor nodes
+	if (!InputPin->LinkedTo.IsEmpty())
+	{
+		InputPin->LinkedTo[0]->GetOwningNode()->ReconstructNode();
+	}
+	UEdGraphPin* NewOutputKeysPin = GetOutputKeysPin();
+	if (NewOutputKeysPin && !NewOutputKeysPin->LinkedTo.IsEmpty())
+	{
+		NewOutputKeysPin->LinkedTo[0]->GetOwningNode()->ReconstructNode();
+	}
+
+	// For map format, also refresh this node
+	if (CurrentFormat == EFenixCookSelectorInputFormat::Map)
+	{
+		ReconstructNode();
+	}
+}
+
+void UK2Node_CookSelectorInput::OnPinConnectionUpdateInMapFormat(UEdGraphPin* Pin, UEdGraphPin* SyncedPin)
+{
+	FEdGraphPinType& PinType = Pin->PinType;
+	FEdGraphPinType& SyncedPinType = SyncedPin->PinType;
+	if (Pin->LinkedTo.IsEmpty())
+	{
+		if (SyncedPin->LinkedTo.IsEmpty())
+		{
+			ChangeToWildCardPinType(PinType);
+			ChangeToWildCardPinType(SyncedPinType);
+		}
+	}
+	else
+	{
+		UEdGraphPin* NeighborPin = Pin->LinkedTo[0];
+		const FEdGraphPinType& NeighborPinType = NeighborPin->PinType;
+		if (NeighborPinType.PinCategory != UEdGraphSchema_K2::PC_Wildcard)
+		{
+			CopyPinTypeCategoryInfo(PinType, NeighborPinType);
+			CopyPinTypeCategoryInfo(SyncedPinType, NeighborPinType);
+			if (!SyncedPin->LinkedTo.IsEmpty())
+			{
+				SyncedPin->LinkedTo[0]->GetOwningNode()->ReconstructNode();
+			}
+		}
+	}
+}
+
+bool UK2Node_CookSelectorInput::PostPinConnectionReconstructionInMapFormat(UEdGraphPin* Pin, UEdGraphPin* SyncedPin)
+{
+	if (!Pin->LinkedTo.IsEmpty())
+	{
+		UEdGraphPin* NeighborPin = Pin->LinkedTo[0];
+		const FEdGraphPinType& NeighborPinType = NeighborPin->PinType;
+		if (NeighborPinType.PinCategory != UEdGraphSchema_K2::PC_Wildcard)
+		{
+			CopyPinTypeCategoryInfo(Pin->PinType, NeighborPinType);
+			CopyPinTypeCategoryInfo(SyncedPin->PinType, NeighborPinType);
+			if (!SyncedPin->LinkedTo.IsEmpty())
+			{
+				SyncedPin->LinkedTo[0]->GetOwningNode()->ReconstructNode();
+			}
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void UK2Node_CookSelectorInput::ChangeToWildCardPinType(FEdGraphPinType& PinType)
+{
+	PinType.PinCategory = UEdGraphSchema_K2::PC_Wildcard;
+	PinType.PinSubCategory = NAME_None;
+	PinType.PinSubCategoryObject = nullptr;
+	PinType.bIsReference = false;
+	PinType.bIsConst = false;
+	PinType.bIsWeakPointer = false;
+	PinType.bIsUObjectWrapper = false;
+	PinType.bSerializeAsSinglePrecisionFloat = false;
+}
+
+void UK2Node_CookSelectorInput::CopyPinTypeCategoryInfo(FEdGraphPinType& PinType, const FEdGraphPinType& SrcPinType)
+{
+	PinType.PinCategory = SrcPinType.PinCategory;
+	PinType.PinSubCategory = SrcPinType.PinSubCategory;
+	PinType.PinSubCategoryObject = SrcPinType.PinSubCategoryObject;
+	PinType.bIsReference = SrcPinType.bIsReference;
+	PinType.bIsConst = SrcPinType.bIsConst;
+	PinType.bIsWeakPointer = SrcPinType.bIsWeakPointer;
+	PinType.bIsUObjectWrapper = SrcPinType.bIsUObjectWrapper;
+	PinType.bSerializeAsSinglePrecisionFloat = SrcPinType.bSerializeAsSinglePrecisionFloat;
+}
+
+void UK2Node_CookSelectorInput::ChangePinCategoryToDouble(FEdGraphPinType& PinType)
+{
+	PinType.PinCategory = UEdGraphSchema_K2::PC_Real;
+	PinType.PinSubCategory = UEdGraphSchema_K2::PC_Double;
+	PinType.PinSubCategoryObject = nullptr;
+}
+
+void UK2Node_CookSelectorInput::ChangePinCategoryToWeightOrProbEntry(FEdGraphPinType& PinType)
+{
+	PinType.PinCategory = UEdGraphSchema_K2::PC_Struct;
+	PinType.PinSubCategory = NAME_None;
+	PinType.PinSubCategoryObject = FWeightOrProbEntry::StaticStruct();
+}
+
+void UK2Node_CookSelectorInput::ChangePinCategoryToWildcard(FEdGraphPinType& PinType)
+{
+	PinType.PinCategory = UEdGraphSchema_K2::PC_Wildcard;
+	PinType.PinSubCategory = NAME_None;
+	PinType.PinSubCategoryObject = nullptr;
+}
+
+void UK2Node_CookSelectorInput::ChangePinCategoryToName(FEdGraphPinType& PinType)
+{
+	PinType.PinCategory = UEdGraphSchema_K2::PC_Name;
+	PinType.PinSubCategory = NAME_None;
+	PinType.PinSubCategoryObject = nullptr;
+}
+
+void UK2Node_CookSelectorInput::ChangePinValueCategoryToDouble(FEdGraphTerminalType& TerminalType)
+{
+	TerminalType.TerminalCategory = UEdGraphSchema_K2::PC_Real;
+	TerminalType.TerminalSubCategory = UEdGraphSchema_K2::PC_Double;
+	TerminalType.TerminalSubCategoryObject = nullptr;
+}
+
+void UK2Node_CookSelectorInput::ChangePinValueCategoryToWeightOrProbEntry(FEdGraphTerminalType& TerminalType)
+{
+	TerminalType.TerminalCategory = UEdGraphSchema_K2::PC_Struct;
+	TerminalType.TerminalSubCategory = NAME_None;
+	TerminalType.TerminalSubCategoryObject = FWeightOrProbEntry::StaticStruct();
+}
+
+void UK2Node_CookSelectorInput::ChangePinTypeToDoubleArray(FEdGraphPinType& PinType)
+{
+	PinType.PinCategory = UEdGraphSchema_K2::PC_Real;
+	PinType.PinSubCategory = UEdGraphSchema_K2::PC_Double;
+	PinType.PinSubCategoryObject = nullptr;
+	PinType.ContainerType = EPinContainerType::Array;
+	PinType.PinValueType = FEdGraphTerminalType();
+}
+
+void UK2Node_CookSelectorInput::ChangePinTypeToWeightOrProbArray(FEdGraphPinType& PinType)
+{
+	PinType.PinCategory = UEdGraphSchema_K2::PC_Struct;
+	PinType.PinSubCategory = NAME_None;
+	PinType.PinSubCategoryObject = FWeightOrProbEntry::StaticStruct();
+	PinType.ContainerType = EPinContainerType::Array;
+	PinType.PinValueType = FEdGraphTerminalType();
+}
+
+void UK2Node_CookSelectorInput::ChangePinTypeToDoubleMap(FEdGraphPinType& PinType)
+{
+	PinType.PinCategory = UEdGraphSchema_K2::PC_Wildcard;
+	PinType.PinSubCategory = NAME_None;
+	PinType.PinSubCategoryObject = nullptr;
+	PinType.ContainerType = EPinContainerType::Map;
+	FEdGraphTerminalType ValueType;
+	ValueType.TerminalCategory = UEdGraphSchema_K2::PC_Real;
+	ValueType.TerminalSubCategory = UEdGraphSchema_K2::PC_Double;
+	PinType.PinValueType = ValueType;
+}
+
+void UK2Node_CookSelectorInput::ChangePinTypeToWeightOrProbMap(FEdGraphPinType& PinType)
+{
+	PinType.PinCategory = UEdGraphSchema_K2::PC_Wildcard;
+	PinType.PinSubCategory = NAME_None;
+	PinType.PinSubCategoryObject = nullptr;
+	PinType.ContainerType = EPinContainerType::Map;
+	FEdGraphTerminalType ValueType;
+	ValueType.TerminalCategory = UEdGraphSchema_K2::PC_Struct;
+	ValueType.TerminalSubCategoryObject = FWeightOrProbEntry::StaticStruct();
+	PinType.PinValueType = ValueType;
+}
+
+void UK2Node_CookSelectorInput::ChangePinTypeToDataTable(FEdGraphPinType& PinType)
+{
+	PinType.PinCategory = UEdGraphSchema_K2::PC_Object;
+	PinType.PinSubCategory = NAME_None;
+	PinType.PinSubCategoryObject = UDataTable::StaticClass();
+	PinType.ContainerType = EPinContainerType::None;
+	PinType.PinValueType = FEdGraphTerminalType();
+}
+
+void UK2Node_CookSelectorInput::ChangePinTypeToCookedSelectorDistribution(FEdGraphPinType& PinType)
+{
+	PinType.PinCategory = UEdGraphSchema_K2::PC_Struct;
+	PinType.PinSubCategory = NAME_None;
+	PinType.PinSubCategoryObject = FCookedSelectorDistribution::StaticStruct();
+	PinType.ContainerType = EPinContainerType::None;
+	PinType.PinValueType = FEdGraphTerminalType();
 }
 
 FText UK2Node_CookSelectorInput::GetCurrentTooltip() const

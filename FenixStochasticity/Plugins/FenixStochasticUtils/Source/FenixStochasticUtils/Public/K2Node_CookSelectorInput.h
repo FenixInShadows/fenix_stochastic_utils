@@ -51,11 +51,47 @@ class FENIXSTOCHASTICUTILS_API UK2Node_CookSelectorInput : public UK2Node
 	
 	virtual void PinDefaultValueChanged(UEdGraphPin* ChangedPin) override;
 
+	virtual void PinConnectionListChanged(UEdGraphPin* Pin) override;
+
+	virtual void PostReconstructNode() override;
+
 	void CreateInOutPins();
 
 	void OnDataTypePinUpdated(const EFenixCookSelectorInputDataType NewDataType);
 
 	void OnFormatPinUpdated(const EFenixCookSelectorInputFormat NewFormat);
+
+	void OnPinConnectionUpdateInMapFormat(UEdGraphPin* Pin, UEdGraphPin* SyncedPin);
+
+	bool PostPinConnectionReconstructionInMapFormat(UEdGraphPin* Pin, UEdGraphPin* SyncedPin);
+
+	void ChangeToWildCardPinType(FEdGraphPinType& PinType);
+
+	void CopyPinTypeCategoryInfo(FEdGraphPinType& PinType, const FEdGraphPinType& SrcPinType);
+
+	void ChangePinCategoryToDouble(FEdGraphPinType& PinType);
+
+	void ChangePinCategoryToWeightOrProbEntry(FEdGraphPinType& PinType);
+
+	void ChangePinCategoryToWildcard(FEdGraphPinType& PinType);
+
+	void ChangePinCategoryToName(FEdGraphPinType& PinType);
+
+	void ChangePinValueCategoryToDouble(FEdGraphTerminalType& TerminalType);
+
+	void ChangePinValueCategoryToWeightOrProbEntry(FEdGraphTerminalType& TerminalType);
+
+	void ChangePinTypeToDoubleArray(FEdGraphPinType& PinType);
+
+	void ChangePinTypeToWeightOrProbArray(FEdGraphPinType& PinType);
+
+	void ChangePinTypeToDoubleMap(FEdGraphPinType& PinType);
+
+	void ChangePinTypeToWeightOrProbMap(FEdGraphPinType& PinType);
+	
+	void ChangePinTypeToDataTable(FEdGraphPinType& PinType);
+
+	void ChangePinTypeToCookedSelectorDistribution(FEdGraphPinType& PinType);
 
 	FText GetCurrentTooltip() const;
 

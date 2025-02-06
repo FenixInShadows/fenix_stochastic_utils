@@ -90,7 +90,40 @@ void UK2Node_CookSelectorInput::ExpandNode(FKismetCompilerContext& CompilerConte
 
 	CompilerContext.MovePinLinksToIntermediate(*(GetInputPin()), *(CallFuncNode->FindPin(FuncInputPinName)));
 	CompilerContext.MovePinLinksToIntermediate(*(GetOutputPin()), *(CallFuncNode->GetReturnValuePin()));*/
+
+	FName FuncName;
+	FString FuncInputPinName;
+	FString FuncOutputPinName;
+
+	switch (CurrentDataType)
+	{
+	case EFenixCookSelectorInputDataType::Weight:
+		FuncName = GET_FUNCTION_NAME_CHECKED(USelectorUtils, MakeCumulatives);
+		FuncInputPinName = "Values";
+		FuncOutputPinName = "OutCumulatives";
+		break;
+	case EFenixCookSelectorInputDataType::Prob:
+		FuncName = GET_FUNCTION_NAME_CHECKED(USelectorUtils, MakeCumulativesWithCutoff);
+		FuncInputPinName = "Values";
+		FuncOutputPinName = "OutCumulatives";
+		break;
+	case EFenixCookSelectorInputDataType::WeightOrProb:
+		FuncName = GET_FUNCTION_NAME_CHECKED(USelectorUtils, CookSelectorDistribution);
+		FuncInputPinName = "Entries";
+		FuncOutputPinName = "OutDistribution";
+		break;
+	default:  // should not happen
+		BreakAllNodeLinks();
+		return;
+	}
 	
+	UK2Node_CallFunction* CallFuncNode = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
+	CallFuncNode->FunctionReference.SetExternalMember(FuncName, USelectorUtils::StaticClass());
+	CallFuncNode->AllocateDefaultPins();
+
+	CompilerContext.MovePinLinksToIntermediate(*(GetInputPin()), *(CallFuncNode->FindPin(FuncInputPinName)));
+	CompilerContext.MovePinLinksToIntermediate(*(GetOutputPin()), *(CallFuncNode->FindPin(FuncOutputPinName)));
+
 	BreakAllNodeLinks();
 }
 
@@ -327,10 +360,18 @@ void UK2Node_CookSelectorInput::OnDataTypePinUpdated(const EFenixCookSelectorInp
 	switch (NewDataType)
 	{
 	case EFenixCookSelectorInputDataType::Weight:
+		if (!OutputPin->SubPins.IsEmpty())
+		{
+			GetSchema()->RecombinePin(OutputPin->SubPins[0]);
+		}
 		OutputPin->PinName = PIN_NAME_CUM_WEIGHTS;
 		ChangePinTypeToDoubleArray(OutputPin->PinType);
 		break;
 	case EFenixCookSelectorInputDataType::Prob:
+		if (!OutputPin->SubPins.IsEmpty())
+		{
+			GetSchema()->RecombinePin(OutputPin->SubPins[0]);
+		}
 		OutputPin->PinName = PIN_NAME_CUM_PROBS;
 		ChangePinTypeToDoubleArray(OutputPin->PinType);
 		break;

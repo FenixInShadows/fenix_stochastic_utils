@@ -41,10 +41,6 @@ class FENIXSTOCHASTICUTILS_API UK2Node_CookSelectorInput : public UK2Node
 
 	virtual bool IsNodePure() const override { return true; }
 
-	virtual bool IsNodeSafeToIgnore() const override { return true; }
-
-	virtual FNodeHandlingFunctor* CreateNodeHandler(FKismetCompilerContext& CompilerContext) const override;
-
 	virtual void ExpandNode(FKismetCompilerContext& CompilerContext, UEdGraph* SourceGraph) override;
 
 	virtual void AllocateDefaultPins() override;
@@ -57,9 +53,15 @@ class FENIXSTOCHASTICUTILS_API UK2Node_CookSelectorInput : public UK2Node
 
 	void CreateInOutPins();
 
-	void OnDataTypePinUpdated(const EFenixCookSelectorInputDataType NewDataType);
+	void OnDataTypePinUpdated(UEdGraphPin* ChangedPin);
 
-	void OnFormatPinUpdated(const EFenixCookSelectorInputFormat NewFormat);
+	void OnFormatPinUpdated(UEdGraphPin* ChangedPin);
+
+	void OnInputPinUpdated(UEdGraphPin* ChangedPin);
+
+	void OnDataTableWeightOrProbNamePinUpdated(UEdGraphPin* ChangedPin);
+
+	void OnDataTableIsProbNamePinUpdated(UEdGraphPin* ChangedPin);
 
 	void OnPinConnectionUpdateInMapFormat(UEdGraphPin* Pin, UEdGraphPin* SyncedPin);
 
@@ -109,23 +111,26 @@ class FENIXSTOCHASTICUTILS_API UK2Node_CookSelectorInput : public UK2Node
 
 	UEdGraphPin* GetOutputKeysPin();
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintInternalUseOnly = "true"))
-	static int32 TestK2Basic(const int32 InputInt);
+	FNodeTextCache CachedToolTip;
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintInternalUseOnly = "true"))
-	static TArray<int32> TestK2Array(const TArray<int32> InputArray);
-
-	UFUNCTION(BlueprintPure, meta = (BlueprintInternalUseOnly = "true"))
-	static TSet<int32> TestK2Set(const TSet<int32> InputSet);
-
-	UFUNCTION(BlueprintPure, meta = (BlueprintInternalUseOnly = "true"))
-	static TMap<int32, FString> TestK2Map(const TMap<int32, FString> InputMap);
-
-	UPROPERTY()
+	UPROPERTY()  // Need to store this in asset, plus need to use this in ExpandNode for the temperorary node copy.
 	EFenixCookSelectorInputDataType CurrentDataType = EFenixCookSelectorInputDataType::Weight;
 
-	UPROPERTY()
+	UPROPERTY()  // Need to store this in asset, plus need to use this in ExpandNode for the temperorary node copy.
 	EFenixCookSelectorInputFormat CurrentFormat = EFenixCookSelectorInputFormat::Array;
 
-	FNodeTextCache CachedToolTip;
+	UPROPERTY()  // Store this in asset for maintaining history/preference.
+	TObjectPtr<UObject> DataTable;
+
+	UPROPERTY()  // Store this in asset for maintaining history/preference.
+	FString WeightPropertyName = "Weight";
+	
+	UPROPERTY()  // Store this in asset for maintaining history/preference.
+	FString ProbPropertyName = "Prob";
+	
+	UPROPERTY()  // Store this in asset for maintaining history/preference.
+	FString WeightOrProbPropertyName = "WeightOrProb";
+
+	UPROPERTY()  // Store this in asset for maintaining history/preference.
+	FString IsProbPropertyName = "IsProb";
 };

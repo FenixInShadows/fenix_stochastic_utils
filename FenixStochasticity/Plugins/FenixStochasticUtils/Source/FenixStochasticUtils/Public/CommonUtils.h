@@ -24,7 +24,7 @@ public:
 	static UPARAM(DisplayName = "Out Index") int32 BinarySearchForInsertionInSegment(const double TargetKey, const TArray<double>& IncreasingKeys, const int32 StartIndex, const int32 EndIndex);
 
 	/** Compute simple additive cumulation of values in an array, outputing the cumulative array. */
-	UFUNCTION(BlueprintPure, Category = "Fenix|CommonUtils|ArrayMath")
+	UFUNCTION(BlueprintCallable, Category = "Fenix|CommonUtils|ArrayMath")
 	static void MakeSimpleCumulatives(const TArray<double>& Values, TArray<double>& OutCumulatives);
 
 	/** Get data table column as a floating point value array. */

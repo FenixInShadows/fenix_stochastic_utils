@@ -61,7 +61,7 @@ public: // Blueprint and C++ APIs
 	* Parameter ValueLowerClamp is used for clamping at the lower bounds of each of the values before being cumulated (e.g. regard weights or probabilities as zeros).
 	* Best used on cases those original values do not change. Needs remake to update with the change on the original values.
 	*/
-	UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = 2), Category = "Fenix|SelectorUtils|SelectionPreprocessing")
+	UFUNCTION(BlueprintCallable, meta = (AdvancedDisplay = 2), Category = "Fenix|SelectorUtils|SelectionPreprocessing")
 	static void MakeCumulatives(const TArray<double>& Values, TArray<double>& OutCumulatives, double ValueLowerClamp = 0.0);
 
 	/**
@@ -71,7 +71,7 @@ public: // Blueprint and C++ APIs
 	* Due to possible cut off, the output array may be shorter than the input array. 
 	* Best used on cases those original values do not change. Needs remake to update with the change on the original values.
 	*/
-	UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = 2), Category = "Fenix|SelectorUtils|SelectionPreprocessing")
+	UFUNCTION(BlueprintCallable, meta = (AdvancedDisplay = 2), Category = "Fenix|SelectorUtils|SelectionPreprocessing")
 	static void MakeCumulativesWithCutoff(const TArray<double>& Values, TArray<double>& OutCumulatives, double ValueLowerClamp = 0.0, double TotalCutoff = 1.0);
 
 	/**
@@ -80,7 +80,7 @@ public: // Blueprint and C++ APIs
 	* The result is represented as probabilities if there are no weight entries or the total from probability entries adds up to no less than 1.0, otherwise reprenented as weights.
 	* Best used on cases where the WeightOrProbEntry's do not change. Needs remake when they get changed.
 	*/
-	UFUNCTION(BlueprintPure, Category = "Fenix|SelectorUtils|SelectionPreprocessing")
+	UFUNCTION(BlueprintCallable, Category = "Fenix|SelectorUtils|SelectionPreprocessing")
 	static void CookSelectorDistribution(const TArray<FWeightOrProbEntry>& Entries, FCookedSelectorDistribution& OutDistribution);
 
 	/** Get an array of FWeightOrProbEntry's from a data table. */

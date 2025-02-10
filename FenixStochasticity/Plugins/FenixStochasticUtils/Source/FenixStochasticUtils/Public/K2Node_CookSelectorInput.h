@@ -39,8 +39,6 @@ class FENIXSTOCHASTICUTILS_API UK2Node_CookSelectorInput : public UK2Node
 
 	virtual FText GetMenuCategory() const override { return FText::FromString("Fenix|SelectorUtils|SelectionPreprocessing"); }
 
-	virtual bool IsNodePure() const override { return true; }
-
 	virtual void ExpandNode(FKismetCompilerContext& CompilerContext, UEdGraph* SourceGraph) override;
 
 	virtual void AllocateDefaultPins() override;
@@ -71,6 +69,10 @@ class FENIXSTOCHASTICUTILS_API UK2Node_CookSelectorInput : public UK2Node
 
 	void CopyPinTypeCategoryInfo(FEdGraphPinType& PinType, const FEdGraphPinType& SrcPinType);
 
+	void CopyPinTypeAndValueTypeInfo(FEdGraphPinType& PinType, const FEdGraphPinType& SrcPinType);
+
+	void CopyPinValueTypeToPinTypeInfo(FEdGraphPinType& PinType, const FEdGraphTerminalType& SrcPinValueType);
+
 	void ChangePinCategoryToDouble(FEdGraphPinType& PinType);
 
 	void ChangePinCategoryToWeightOrProbEntry(FEdGraphPinType& PinType);
@@ -79,9 +81,9 @@ class FENIXSTOCHASTICUTILS_API UK2Node_CookSelectorInput : public UK2Node
 
 	void ChangePinCategoryToName(FEdGraphPinType& PinType);
 
-	void ChangePinValueCategoryToDouble(FEdGraphTerminalType& TerminalType);
+	void ChangePinValueCategoryToDouble(FEdGraphTerminalType& PinValueType);
 
-	void ChangePinValueCategoryToWeightOrProbEntry(FEdGraphTerminalType& TerminalType);
+	void ChangePinValueCategoryToWeightOrProbEntry(FEdGraphTerminalType& PinValueType);
 
 	void ChangePinTypeToDoubleArray(FEdGraphPinType& PinType);
 

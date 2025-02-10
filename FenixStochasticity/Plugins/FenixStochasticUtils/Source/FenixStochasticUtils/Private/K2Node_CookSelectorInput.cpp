@@ -9,6 +9,9 @@
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "Engine/DataTable.h"
 #include "SelectorUtils.h"
+#include "CommonUtils.h"
+#include "Kismet/BlueprintMapLibrary.h"
+#include "Kismet/DataTableFunctionLibrary.h"
 
 #define PIN_NAME_DATA_TYPE (TEXT("DataType"))
 #define PIN_NAME_FORMAT (TEXT("Format"))
@@ -65,7 +68,7 @@ void UK2Node_CookSelectorInput::ExpandNode(FKismetCompilerContext& CompilerConte
 		FuncOutputPinName = "OutCumulatives";
 		break;
 	case EFenixCookSelectorInputDataType::Prob:
-		FuncName = GET_FUNCTION_NAME_CHECKED(USelectorUtils, MakeCumulativesWithCutoff);
+		FuncName = GET_FUNCTION_NAME_CHECKED(USelectorUtils, MakeCumulatives);  // Note: don't do cut off here, as we do not make much assumptions on how the result would be used
 		FuncInputPinName = "Values";
 		FuncOutputPinName = "OutCumulatives";
 		break;
@@ -79,26 +82,134 @@ void UK2Node_CookSelectorInput::ExpandNode(FKismetCompilerContext& CompilerConte
 		return;
 	}
 	
-	UK2Node_CallFunction* CallFuncNode = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
-	CallFuncNode->FunctionReference.SetExternalMember(FuncName, USelectorUtils::StaticClass());
-	CallFuncNode->AllocateDefaultPins();
+	UK2Node_CallFunction* CookFuncNode = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
+	CookFuncNode->FunctionReference.SetExternalMember(FuncName, USelectorUtils::StaticClass());
+	CookFuncNode->AllocateDefaultPins();
 
-	CompilerContext.MovePinLinksToIntermediate(*(GetInputPin()), *(CallFuncNode->FindPin(FuncInputPinName)));
-	CompilerContext.MovePinLinksToIntermediate(*(GetOutputPin()), *(CallFuncNode->FindPin(FuncOutputPinName)));
+	UEdGraphPin* ExecPin = GetExecPin();
+	UEdGraphPin* InputPin = GetInputPin();
+	UEdGraphPin* OutputPin = GetOutputPin();
+	UEdGraphPin* ThenPin = GetThenPin();
+	UEdGraphPin* CookFuncExecPin = CookFuncNode->GetExecPin();
+	UEdGraphPin* CookFuncInputPin = CookFuncNode->FindPin(FuncInputPinName);
+	UEdGraphPin* CookFuncOutputPin = CookFuncNode->FindPin(FuncOutputPinName);
+	UEdGraphPin* CookFuncThenPin = CookFuncNode->GetThenPin();
+
+	switch (CurrentFormat)
+	{
+	case EFenixCookSelectorInputFormat::Array:
+		{
+			CompilerContext.MovePinLinksToIntermediate(*ExecPin, *CookFuncExecPin);
+			CompilerContext.MovePinLinksToIntermediate(*InputPin, *CookFuncInputPin);
+			CompilerContext.MovePinLinksToIntermediate(*OutputPin, *CookFuncOutputPin);
+			CompilerContext.MovePinLinksToIntermediate(*ThenPin, *CookFuncThenPin);
+		}
+		break;
+	case EFenixCookSelectorInputFormat::Map:
+		{
+			FuncName = GET_FUNCTION_NAME_CHECKED(UBlueprintMapLibrary, Map_Keys);
+			UK2Node_CallFunction* GetKeysFuncNode = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
+			GetKeysFuncNode->FunctionReference.SetExternalMember(FuncName, UBlueprintMapLibrary::StaticClass());
+			GetKeysFuncNode->AllocateDefaultPins();
+			UEdGraphPin* GetKeysInputPin = GetKeysFuncNode->FindPin(TEXT("TargetMap"));
+			CopyPinTypeAndValueTypeInfo(GetKeysInputPin->PinType, InputPin->PinType);
+			UEdGraphPin* GetKeysOutputPin = GetKeysFuncNode->FindPin(TEXT("Keys"));
+			CopyPinTypeCategoryInfo(GetKeysOutputPin->PinType, InputPin->PinType);
+
+			FuncName = GET_FUNCTION_NAME_CHECKED(UBlueprintMapLibrary, Map_Values);
+			UK2Node_CallFunction* GetValuesFuncNode = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
+			GetValuesFuncNode->FunctionReference.SetExternalMember(FuncName, UBlueprintMapLibrary::StaticClass());
+			GetValuesFuncNode->AllocateDefaultPins();
+			UEdGraphPin* GetValuesInputPin = GetValuesFuncNode->FindPin(TEXT("TargetMap"));
+			CopyPinTypeAndValueTypeInfo(GetValuesInputPin->PinType, InputPin->PinType);
+			UEdGraphPin* GetValuesOutputPin = GetValuesFuncNode->FindPin(TEXT("Values"));
+			CopyPinValueTypeToPinTypeInfo(GetValuesOutputPin->PinType, InputPin->PinType.PinValueType);
+
+			// Keys = GetKeys(Map) -> Values = GetValues(Map) -> Cooked = Cook(Values) => Return (Cooked, Keys)
+			CompilerContext.MovePinLinksToIntermediate(*ExecPin, *(GetKeysFuncNode->GetExecPin()));
+			CompilerContext.CopyPinLinksToIntermediate(*InputPin, *GetKeysInputPin);
+			CompilerContext.MovePinLinksToIntermediate(*GetOutputKeysPin(), *GetKeysOutputPin);
+			GetKeysFuncNode->GetThenPin()->MakeLinkTo(GetValuesFuncNode->GetExecPin());
+			CompilerContext.MovePinLinksToIntermediate(*InputPin, *GetValuesInputPin);
+			GetValuesOutputPin->MakeLinkTo(CookFuncInputPin);
+			GetValuesFuncNode->GetThenPin()->MakeLinkTo(CookFuncExecPin);
+			CompilerContext.MovePinLinksToIntermediate(*OutputPin, *CookFuncOutputPin);
+			CompilerContext.MovePinLinksToIntermediate(*ThenPin, *CookFuncThenPin);
+		}
+		break;
+	case EFenixCookSelectorInputFormat::DataTable:
+		FuncName = GET_FUNCTION_NAME_CHECKED(UDataTableFunctionLibrary, GetDataTableRowNames);
+		UK2Node_CallFunction* GetKeysFuncNode = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
+		GetKeysFuncNode->FunctionReference.SetExternalMember(FuncName, UDataTableFunctionLibrary::StaticClass());
+		GetKeysFuncNode->AllocateDefaultPins();
+		UEdGraphPin* GetKeysInputPin = GetKeysFuncNode->FindPin(TEXT("Table"));
+		UEdGraphPin* GetKeysOutputPin = GetKeysFuncNode->FindPin(TEXT("OutRowNames"));
+
+		UK2Node_CallFunction* GetValuesFuncNode = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
+		UEdGraphPin* GetValuesInputPin = nullptr;
+		UEdGraphPin* GetValuesWeightOrProbNamePin = nullptr;
+		UEdGraphPin* GetValuesIsProbNamePin = nullptr;
+		UEdGraphPin* GetValuesOutputPin = nullptr;
+		switch (CurrentDataType)
+		{
+		case EFenixCookSelectorInputDataType::Weight:
+		case EFenixCookSelectorInputDataType::Prob:
+			FuncName = GET_FUNCTION_NAME_CHECKED(UCommonUtils, GetDataTableColumnAsFloats);
+			GetValuesFuncNode->FunctionReference.SetExternalMember(FuncName, UCommonUtils::StaticClass());
+			GetValuesFuncNode->AllocateDefaultPins();
+			GetValuesInputPin = GetValuesFuncNode->FindPin(TEXT("DataTable"));
+			GetValuesWeightOrProbNamePin = GetValuesFuncNode->FindPin(TEXT("PropertyName"));
+			GetValuesOutputPin = GetValuesFuncNode->FindPin(TEXT("OutValues"));
+			break;
+		case EFenixCookSelectorInputDataType::WeightOrProb:
+			FuncName = GET_FUNCTION_NAME_CHECKED(USelectorUtils, GetWeightOrProbEntriesFromDataTable);
+			GetValuesFuncNode->FunctionReference.SetExternalMember(FuncName, USelectorUtils::StaticClass());
+			GetValuesFuncNode->AllocateDefaultPins();
+			GetValuesInputPin = GetValuesFuncNode->FindPin(TEXT("DataTable"));
+			GetValuesWeightOrProbNamePin = GetValuesFuncNode->FindPin(TEXT("WeightOrProbPropertyName"));
+			GetValuesIsProbNamePin = GetValuesFuncNode->FindPin(TEXT("IsProbPropertyName"));
+			GetValuesOutputPin = GetValuesFuncNode->FindPin(TEXT("OutEntries"));
+			break;
+		}
+
+		// Keys = GetRowNames(DataTable) -> Values = GetValues(DataTable, LabelNames) -> Cooked = Cook(Values) => Return (Cooked, Keys)
+		CompilerContext.MovePinLinksToIntermediate(*ExecPin, *(GetKeysFuncNode->GetExecPin()));
+		CompilerContext.CopyPinLinksToIntermediate(*InputPin, *GetKeysInputPin);
+		CompilerContext.MovePinLinksToIntermediate(*GetOutputKeysPin(), *GetKeysOutputPin);
+		GetKeysFuncNode->GetThenPin()->MakeLinkTo(GetValuesFuncNode->GetExecPin());
+		CompilerContext.MovePinLinksToIntermediate(*InputPin, *GetValuesInputPin);
+		CompilerContext.MovePinLinksToIntermediate(*GetInputDataTableWeightOrProbNamePin(), *GetValuesWeightOrProbNamePin);
+		if (GetValuesIsProbNamePin)
+		{
+			CompilerContext.MovePinLinksToIntermediate(*GetInputDataTableIsProbNamePin(), *GetValuesIsProbNamePin);
+		}
+		GetValuesOutputPin->MakeLinkTo(CookFuncInputPin);
+		GetValuesFuncNode->GetThenPin()->MakeLinkTo(CookFuncExecPin);
+		CompilerContext.MovePinLinksToIntermediate(*OutputPin, *CookFuncOutputPin);
+		CompilerContext.MovePinLinksToIntermediate(*ThenPin, *CookFuncThenPin);
+		break;
+	}
 
 	BreakAllNodeLinks();
 }
 
 void UK2Node_CookSelectorInput::AllocateDefaultPins()
 {
+	// Add execution pins
+	CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Exec, UEdGraphSchema_K2::PN_Execute);
+	CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, UEdGraphSchema_K2::PN_Then);
+
+	// Add data type pin
 	UEnum* DataTypeTypeObject = FindObjectChecked<UEnum>(ANY_PACKAGE, TEXT("EFenixCookSelectorInputDataType"), true);
 	UEdGraphPin* DataTypePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Byte, DataTypeTypeObject, PIN_NAME_DATA_TYPE);
 	DataTypePin->DefaultValue = DataTypeTypeObject->GetNameStringByValue(static_cast<int64>(CurrentDataType));
 
+	// Add format pin
 	UEnum* FormatTypeObject = FindObjectChecked<UEnum>(ANY_PACKAGE, TEXT("EFenixCookSelectorInputFormat"), true);
 	UEdGraphPin* FormatPin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Byte, FormatTypeObject, PIN_NAME_FORMAT);
 	FormatPin->DefaultValue = FormatTypeObject->GetNameStringByValue(static_cast<int64>(CurrentFormat));
 
+	// Add other pins
 	CreateInOutPins();
 
 	Super::AllocateDefaultPins();
@@ -653,6 +764,29 @@ void UK2Node_CookSelectorInput::CopyPinTypeCategoryInfo(FEdGraphPinType& PinType
 	PinType.bSerializeAsSinglePrecisionFloat = SrcPinType.bSerializeAsSinglePrecisionFloat;
 }
 
+void UK2Node_CookSelectorInput::CopyPinTypeAndValueTypeInfo(FEdGraphPinType& PinType, const FEdGraphPinType& SrcPinType)
+{
+	PinType.PinCategory = SrcPinType.PinCategory;
+	PinType.PinSubCategory = SrcPinType.PinSubCategory;
+	PinType.PinSubCategoryObject = SrcPinType.PinSubCategoryObject;
+	PinType.bIsReference = SrcPinType.bIsReference;
+	PinType.bIsConst = SrcPinType.bIsConst;
+	PinType.bIsWeakPointer = SrcPinType.bIsWeakPointer;
+	PinType.bIsUObjectWrapper = SrcPinType.bIsUObjectWrapper;
+	PinType.bSerializeAsSinglePrecisionFloat = SrcPinType.bSerializeAsSinglePrecisionFloat;
+	PinType.PinValueType = SrcPinType.PinValueType;
+}
+
+void UK2Node_CookSelectorInput::CopyPinValueTypeToPinTypeInfo(FEdGraphPinType& PinType, const FEdGraphTerminalType& SrcPinValueType)
+{
+	PinType.PinCategory = SrcPinValueType.TerminalCategory;
+	PinType.PinSubCategory = SrcPinValueType.TerminalSubCategory;
+	PinType.PinSubCategoryObject = SrcPinValueType.TerminalSubCategoryObject;
+	PinType.bIsConst = SrcPinValueType.bTerminalIsConst;
+	PinType.bIsWeakPointer = SrcPinValueType.bTerminalIsWeakPointer;
+	PinType.bIsUObjectWrapper = SrcPinValueType.bTerminalIsUObjectWrapper;
+}
+
 void UK2Node_CookSelectorInput::ChangePinCategoryToDouble(FEdGraphPinType& PinType)
 {
 	PinType.PinCategory = UEdGraphSchema_K2::PC_Real;
@@ -681,18 +815,18 @@ void UK2Node_CookSelectorInput::ChangePinCategoryToName(FEdGraphPinType& PinType
 	PinType.PinSubCategoryObject = nullptr;
 }
 
-void UK2Node_CookSelectorInput::ChangePinValueCategoryToDouble(FEdGraphTerminalType& TerminalType)
+void UK2Node_CookSelectorInput::ChangePinValueCategoryToDouble(FEdGraphTerminalType& PinValueType)
 {
-	TerminalType.TerminalCategory = UEdGraphSchema_K2::PC_Real;
-	TerminalType.TerminalSubCategory = UEdGraphSchema_K2::PC_Double;
-	TerminalType.TerminalSubCategoryObject = nullptr;
+	PinValueType.TerminalCategory = UEdGraphSchema_K2::PC_Real;
+	PinValueType.TerminalSubCategory = UEdGraphSchema_K2::PC_Double;
+	PinValueType.TerminalSubCategoryObject = nullptr;
 }
 
-void UK2Node_CookSelectorInput::ChangePinValueCategoryToWeightOrProbEntry(FEdGraphTerminalType& TerminalType)
+void UK2Node_CookSelectorInput::ChangePinValueCategoryToWeightOrProbEntry(FEdGraphTerminalType& PinValueType)
 {
-	TerminalType.TerminalCategory = UEdGraphSchema_K2::PC_Struct;
-	TerminalType.TerminalSubCategory = NAME_None;
-	TerminalType.TerminalSubCategoryObject = FWeightOrProbEntry::StaticStruct();
+	PinValueType.TerminalCategory = UEdGraphSchema_K2::PC_Struct;
+	PinValueType.TerminalSubCategory = NAME_None;
+	PinValueType.TerminalSubCategoryObject = FWeightOrProbEntry::StaticStruct();
 }
 
 void UK2Node_CookSelectorInput::ChangePinTypeToDoubleArray(FEdGraphPinType& PinType)

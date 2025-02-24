@@ -4,27 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "K2Node.h"
+#include "CommonTypes.h"
+
 #include "K2Node_CookSelectorInput.generated.h"
 
-
-UENUM(BlueprintType)
-enum class EFenixCookSelectorInputDataType : uint8
-{
-	Weight = 0,
-	Prob = 1,
-	WeightOrProb = 2
-};
-
-UENUM(BlueprintType)
-enum class EFenixCookSelectorInputFormat : uint8
-{
-	Array = 0,
-	Map = 1,
-	DataTable = 2
-};
-
 /**
- * 
+ * Custom node for preprocessing inputs to random selectors, for better performance if later repeatedly used.
  */
 UCLASS()
 class FENIXSTOCHASTICUTILS_API UK2Node_CookSelectorInput : public UK2Node
@@ -61,42 +46,6 @@ class FENIXSTOCHASTICUTILS_API UK2Node_CookSelectorInput : public UK2Node
 
 	void OnDataTableIsProbNamePinUpdated(UEdGraphPin* ChangedPin);
 
-	void OnPinConnectionUpdateInMapFormat(UEdGraphPin* Pin, UEdGraphPin* SyncedPin);
-
-	bool PostPinConnectionReconstructionInMapFormat(UEdGraphPin* Pin, UEdGraphPin* SyncedPin);
-
-	void ChangeToWildCardPinType(FEdGraphPinType& PinType);
-
-	void CopyPinTypeCategoryInfo(FEdGraphPinType& PinType, const FEdGraphPinType& SrcPinType);
-
-	void CopyPinTypeAndValueTypeInfo(FEdGraphPinType& PinType, const FEdGraphPinType& SrcPinType);
-
-	void CopyPinValueTypeToPinTypeInfo(FEdGraphPinType& PinType, const FEdGraphTerminalType& SrcPinValueType);
-
-	void ChangePinCategoryToDouble(FEdGraphPinType& PinType);
-
-	void ChangePinCategoryToWeightOrProbEntry(FEdGraphPinType& PinType);
-
-	void ChangePinCategoryToWildcard(FEdGraphPinType& PinType);
-
-	void ChangePinCategoryToName(FEdGraphPinType& PinType);
-
-	void ChangePinValueCategoryToDouble(FEdGraphTerminalType& PinValueType);
-
-	void ChangePinValueCategoryToWeightOrProbEntry(FEdGraphTerminalType& PinValueType);
-
-	void ChangePinTypeToDoubleArray(FEdGraphPinType& PinType);
-
-	void ChangePinTypeToWeightOrProbArray(FEdGraphPinType& PinType);
-
-	void ChangePinTypeToDoubleMap(FEdGraphPinType& PinType);
-
-	void ChangePinTypeToWeightOrProbMap(FEdGraphPinType& PinType);
-	
-	void ChangePinTypeToDataTable(FEdGraphPinType& PinType);
-
-	void ChangePinTypeToCookedSelectorDistribution(FEdGraphPinType& PinType);
-
 	FText GetCurrentTooltip() const;
 
 	UEdGraphPin* GetDataTypePin();
@@ -116,10 +65,10 @@ class FENIXSTOCHASTICUTILS_API UK2Node_CookSelectorInput : public UK2Node
 	FNodeTextCache CachedToolTip;
 
 	UPROPERTY()  // Need to store this in asset, plus need to use this in ExpandNode for the temperorary node copy.
-	EFenixCookSelectorInputDataType CurrentDataType = EFenixCookSelectorInputDataType::Weight;
+	EFenixSelectorInputDataType CurrentDataType = EFenixSelectorInputDataType::Weight;
 
 	UPROPERTY()  // Need to store this in asset, plus need to use this in ExpandNode for the temperorary node copy.
-	EFenixCookSelectorInputFormat CurrentFormat = EFenixCookSelectorInputFormat::Array;
+	EFenixSelectorInputFormat CurrentFormat = EFenixSelectorInputFormat::Array;
 
 	UPROPERTY()  // Store this in asset for maintaining history/preference.
 	TObjectPtr<UObject> DataTable;

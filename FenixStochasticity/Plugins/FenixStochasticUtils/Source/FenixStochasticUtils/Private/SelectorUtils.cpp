@@ -111,7 +111,7 @@ void USelectorUtils::CookSelectorDistribution(const TArray<FWeightOrProbEntry>& 
 	}
 }
 
-void USelectorUtils::GetWeightOrProbEntriesFromDataTable(const UDataTable* DataTable, TArray<FWeightOrProbEntry>& OutEntries, FName WeightOrProbPropertyName, FName IsProbPropertyName)
+void USelectorUtils::GetWeightOrProbEntriesFromDataTable(const UDataTable* DataTable, TArray<FWeightOrProbEntry>& OutEntries, const FName WeightOrProbPropertyName, const FName IsProbPropertyName)
 {
 	OutEntries.Empty();
 	if (DataTable && WeightOrProbPropertyName != NAME_None && IsProbPropertyName != NAME_None)
@@ -144,9 +144,9 @@ int32 USelectorUtils::BPFunc_SelectWithCumWeights(const TArray<double>& CumWeigh
 	return SelectWithCumWeights(CumWeights);
 }
 
-int32 USelectorUtils::BPFunc_SelectWithCumWeightsFromStream(const TArray<double>& CumWeights, FRandomStream& Stream)
+int32 USelectorUtils::BPFunc_SelectWithCumWeightsFromStream(const TArray<double>& CumWeights, const FRandomStream& RandomStream)
 {
-	return SelectWithCumWeights(CumWeights, &Stream);
+	return SelectWithCumWeights(CumWeights, &RandomStream);
 }
 
 int32 USelectorUtils::BPFunc_SelectWithWeights(const TArray<double>& Weights)
@@ -154,9 +154,9 @@ int32 USelectorUtils::BPFunc_SelectWithWeights(const TArray<double>& Weights)
 	return SelectWithWeights(Weights);
 }
 
-int32 USelectorUtils::BPFunc_SelectWithWeightsFromStream(const TArray<double>& Weights, FRandomStream& Stream)
+int32 USelectorUtils::BPFunc_SelectWithWeightsFromStream(const TArray<double>& Weights, const FRandomStream& RandomStream)
 {
-	return SelectWithWeights(Weights, &Stream);
+	return SelectWithWeights(Weights, &RandomStream);
 }
 
 int32 USelectorUtils::BPFunc_SelectWithCumProbs(const TArray<double>& CumProbs)
@@ -164,9 +164,9 @@ int32 USelectorUtils::BPFunc_SelectWithCumProbs(const TArray<double>& CumProbs)
 	return SelectWithCumProbs(CumProbs);
 }
 
-int32 USelectorUtils::BPFunc_SelectWithCumProbsFromStream(const TArray<double>& CumProbs, FRandomStream& Stream)
+int32 USelectorUtils::BPFunc_SelectWithCumProbsFromStream(const TArray<double>& CumProbs, const FRandomStream& RandomStream)
 {
-	return SelectWithCumProbs(CumProbs, &Stream);
+	return SelectWithCumProbs(CumProbs, &RandomStream);
 }
 
 int32 USelectorUtils::BPFunc_SelectWithProbs(const TArray<double>& Probs)
@@ -174,9 +174,9 @@ int32 USelectorUtils::BPFunc_SelectWithProbs(const TArray<double>& Probs)
 	return SelectWithProbs(Probs);
 }
 
-int32 USelectorUtils::BPFunc_SelectWithProbsFromStream(const TArray<double>& Probs, FRandomStream& Stream)
+int32 USelectorUtils::BPFunc_SelectWithProbsFromStream(const TArray<double>& Probs, const FRandomStream& RandomStream)
 {
-	return SelectWithProbs(Probs, &Stream);
+	return SelectWithProbs(Probs, &RandomStream);
 }
 
 int32 USelectorUtils::BPFunc_SelectWithCookedDistribution(const FCookedSelectorDistribution& Distribution)
@@ -184,9 +184,9 @@ int32 USelectorUtils::BPFunc_SelectWithCookedDistribution(const FCookedSelectorD
 	return SelectWithCookedDistribution(Distribution);
 }
 
-int32 USelectorUtils::BPFunc_SelectWithCookedDistributionFromStream(const FCookedSelectorDistribution& Distribution, FRandomStream& Stream)
+int32 USelectorUtils::BPFunc_SelectWithCookedDistributionFromStream(const FCookedSelectorDistribution& Distribution, const FRandomStream& RandomStream)
 {
-	return SelectWithCookedDistribution(Distribution, &Stream);
+	return SelectWithCookedDistribution(Distribution, &RandomStream);
 }
 
 int32 USelectorUtils::BPFunc_SelectWithWeightOrProbEntries(const TArray<FWeightOrProbEntry>& Entries)
@@ -194,12 +194,12 @@ int32 USelectorUtils::BPFunc_SelectWithWeightOrProbEntries(const TArray<FWeightO
 	return SelectWithWeightOrProbEntries(Entries);
 }
 
-int32 USelectorUtils::BPFunc_SelectWithWeightOrProbEntriesFromStream(const TArray<FWeightOrProbEntry>& Entries, FRandomStream& Stream)
+int32 USelectorUtils::BPFunc_SelectWithWeightOrProbEntriesFromStream(const TArray<FWeightOrProbEntry>& Entries, const FRandomStream& RandomStream)
 {
-	return SelectWithWeightOrProbEntries(Entries, &Stream);
+	return SelectWithWeightOrProbEntries(Entries, &RandomStream);
 }
 
-int32 USelectorUtils::SelectWithCumWeights(const TArray<double>& CumWeights, FRandomStream* Stream)
+int32 USelectorUtils::SelectWithCumWeights(const TArray<double>& CumWeights, const FRandomStream* RandomStream)
 {
 	const int32 Num = CumWeights.Num();
 	if (Num == 0)
@@ -217,10 +217,10 @@ int32 USelectorUtils::SelectWithCumWeights(const TArray<double>& CumWeights, FRa
 		return -1;
 	}
 
-	return SelectWithCumWeightsHelper(CumWeights, Num, SumWeight, Stream);
+	return SelectWithCumWeightsHelper(CumWeights, Num, SumWeight, RandomStream);
 }
 
-int32 USelectorUtils::SelectWithWeights(const TArray<double>& Weights, FRandomStream* Stream)
+int32 USelectorUtils::SelectWithWeights(const TArray<double>& Weights, const FRandomStream* RandomStream)
 {
 	const int32 Num = Weights.Num();
 	if (Num == 0)
@@ -241,10 +241,10 @@ int32 USelectorUtils::SelectWithWeights(const TArray<double>& Weights, FRandomSt
 		return -1;
 	}
 
-	return SelectWithCumWeightsHelper(CumWeights, Num, SumWeight, Stream);
+	return SelectWithCumWeightsHelper(CumWeights, Num, SumWeight, RandomStream);
 }
 
-int32 USelectorUtils::SelectWithCumProbs(const TArray<double>& CumProbs, FRandomStream* Stream)
+int32 USelectorUtils::SelectWithCumProbs(const TArray<double>& CumProbs, const FRandomStream* RandomStream)
 {
 	const int32 Num = CumProbs.Num();
 	if (Num == 0)
@@ -258,10 +258,10 @@ int32 USelectorUtils::SelectWithCumProbs(const TArray<double>& CumProbs, FRandom
 		return -1;
 	}
 
-	return SelectWithCumProbsHelper(CumProbs, Num, Stream);
+	return SelectWithCumProbsHelper(CumProbs, Num, RandomStream);
 }
 
-int32 USelectorUtils::SelectWithProbs(const TArray<double>& Probs, FRandomStream* Stream)
+int32 USelectorUtils::SelectWithProbs(const TArray<double>& Probs, const FRandomStream* RandomStream)
 {
 	int32 Num = Probs.Num();
 	if (Num == 0)
@@ -279,19 +279,19 @@ int32 USelectorUtils::SelectWithProbs(const TArray<double>& Probs, FRandomStream
 		return -1;
 	}
 
-	return SelectWithCumProbsHelper(CumProbs, Num, Stream);
+	return SelectWithCumProbsHelper(CumProbs, Num, RandomStream);
 }
 
-int32 USelectorUtils::SelectWithCookedDistribution(const FCookedSelectorDistribution& Distribution, FRandomStream* Stream)
+int32 USelectorUtils::SelectWithCookedDistribution(const FCookedSelectorDistribution& Distribution, const FRandomStream* RandomStream)
 {
 	if (Distribution.IsProbs)
 	{
-		return SelectWithCumProbs(Distribution.CumWeightsOrCumProbs, Stream);
+		return SelectWithCumProbs(Distribution.CumWeightsOrCumProbs, RandomStream);
 	}
-	return SelectWithCumWeights(Distribution.CumWeightsOrCumProbs, Stream);
+	return SelectWithCumWeights(Distribution.CumWeightsOrCumProbs, RandomStream);
 }
 
-int32 USelectorUtils::SelectWithWeightOrProbEntries(const TArray<FWeightOrProbEntry>& Entries, FRandomStream* Stream)
+int32 USelectorUtils::SelectWithWeightOrProbEntries(const TArray<FWeightOrProbEntry>& Entries, const FRandomStream* RandomStream)
 {
 	int32 Num = Entries.Num();
 	if (Num == 0)
@@ -332,7 +332,7 @@ int32 USelectorUtils::SelectWithWeightOrProbEntries(const TArray<FWeightOrProbEn
 			}
 			CumWeights[Idx] = SumWeight;
 		}
-		return SelectWithCumWeightsHelper(CumWeights, Num, SumWeight, Stream);
+		return SelectWithCumWeightsHelper(CumWeights, Num, SumWeight, RandomStream);
 	}
 
 	// pure probabilities
@@ -355,7 +355,7 @@ int32 USelectorUtils::SelectWithWeightOrProbEntries(const TArray<FWeightOrProbEn
 				break;
 			}
 		}
-		return SelectWithCumProbsHelper(CumProbs, Num, Stream);
+		return SelectWithCumProbsHelper(CumProbs, Num, RandomStream);
 	}
 
 	// mixture: convert to weights
@@ -375,12 +375,12 @@ int32 USelectorUtils::SelectWithWeightOrProbEntries(const TArray<FWeightOrProbEn
 		}
 		CumWeights[Idx] = SumWeight;
 	}
-	return SelectWithCumWeightsHelper(CumWeights, Num, SumWeight, Stream);
+	return SelectWithCumWeightsHelper(CumWeights, Num, SumWeight, RandomStream);
 }
 
-int32 USelectorUtils::SelectWithCumWeightsHelper(const TArray<double>& CumWeights, const int32 Num, const double SumWeight, FRandomStream* Stream)
+int32 USelectorUtils::SelectWithCumWeightsHelper(const TArray<double>& CumWeights, const int32 Num, const double SumWeight, const FRandomStream* RandomStream)
 {
-	const double RandomRoll = UCommonUtils::FRandRangeMaybeWithStream(0.0, SumWeight, Stream);
+	const double RandomRoll = UCommonUtils::FRandRangeMaybeWithStream(0.0, SumWeight, RandomStream);
 	int32 SelectedIndex = UCommonUtils::BinarySearchForInsertionInSegment(RandomRoll, CumWeights, 0, Num - 1);
 
 	// guard against rare cases where it rolls exactly sum weight and one or more elements at the end are with zero weights
@@ -395,9 +395,9 @@ int32 USelectorUtils::SelectWithCumWeightsHelper(const TArray<double>& CumWeight
 	return SelectedIndex;
 }
 
-int32 USelectorUtils::SelectWithCumProbsHelper(const TArray<double>& CumProbs, const int32 Num, FRandomStream* Stream)
+int32 USelectorUtils::SelectWithCumProbsHelper(const TArray<double>& CumProbs, const int32 Num, const FRandomStream* RandomStream)
 {
-	const double RandomRoll = UCommonUtils::FRandMaybeWithStream(Stream);
+	const double RandomRoll = UCommonUtils::FRandMaybeWithStream(RandomStream);
 	int32 SelectedIndex = UCommonUtils::BinarySearchForInsertionInSegment(RandomRoll, CumProbs, 0, Num);  // here Num is included to accommodate the case where total prob being not enough
 
 	if (SelectedIndex == Num)

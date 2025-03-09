@@ -14,25 +14,6 @@
 #include "Kismet/BlueprintMapLibrary.h"
 #include "Kismet/DataTableFunctionLibrary.h"
 
-#define PIN_NAME_DATA_TYPE (TEXT("DataType"))
-#define PIN_NAME_FORMAT (TEXT("Format"))
-#define PIN_NAME_WEIGHTS (TEXT("Weights"))
-#define PIN_NAME_PROBS (TEXT("Probs"))
-#define PIN_NAME_WEIGHT_OR_PROBS (TEXT("WeightOrProbs"))
-#define PIN_NAME_WEIGHT_MAP (TEXT("WeightMap"))
-#define PIN_NAME_PROB_MAP (TEXT("ProbMap"))
-#define PIN_NAME_WEIGHT_OR_PROB_MAP (TEXT("WeightOrProbMap"))
-#define PIN_NAME_DATA_TABLE (TEXT("DataTable"))
-#define PIN_NAME_WEIGHT_PROPERTY_NAME (TEXT("WeightPropertyName"))
-#define PIN_NAME_PROB_PROPERTY_NAME (TEXT("ProbPropertyName"))
-#define PIN_NAME_WEIGHT_OR_PROB_PROPERTY_NAME (TEXT("WeightOrProbPropertyName"))
-#define PIN_NAME_IS_PROB_PROPERTY_NAME (TEXT("IsProbPropertyName"))
-#define PIN_NAME_CUM_WEIGHTS (TEXT("CumWeights"))
-#define PIN_NAME_CUM_PROBS (TEXT("CumProbs"))
-#define PIN_NAME_COOKED_DISTRIBUTION (TEXT("CookedDistribution"))
-#define PIN_NAME_KEYS (TEXT("Keys"))
-#define PIN_NAME_ROW_NAMES (TEXT("RowNames"))
-
 FText UK2Node_CookSelectorInput::GetTooltipText() const
 {
 	if (CachedToolTip.IsOutOfDate(this))
@@ -124,7 +105,7 @@ void UK2Node_CookSelectorInput::ExpandNode(FKismetCompilerContext& CompilerConte
 			UEdGraphPin* GetValuesInputPin = GetValuesFuncNode->FindPin(TEXT("TargetMap"));
 			CommonEditorUtils::CopyPinTypeAndValueTypeInfo(GetValuesInputPin->PinType, InputPin->PinType);
 			UEdGraphPin* GetValuesOutputPin = GetValuesFuncNode->FindPin(TEXT("Values"));
-			CommonEditorUtils::CopyPinValueTypeToPinTypeInfo(GetValuesOutputPin->PinType, InputPin->PinType.PinValueType);
+			CommonEditorUtils::CopyPinTypeCategoryInfo(GetValuesOutputPin->PinType, CookFuncInputPin->PinType);
 
 			// Keys = GetKeys(Map) -> Values = GetValues(Map) -> Cooked = Cook(Values) => Return (Cooked, Keys)
 			CompilerContext.MovePinLinksToIntermediate(*ExecPin, *(GetKeysFuncNode->GetExecPin()));
@@ -201,14 +182,16 @@ void UK2Node_CookSelectorInput::AllocateDefaultPins()
 	CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Exec, UEdGraphSchema_K2::PN_Then);
 
 	// Add data type pin
-	UEnum* DataTypeTypeObject = FindObjectChecked<UEnum>(ANY_PACKAGE, TEXT("EFenixSelectorInputDataType"), true);
+	static UEnum* DataTypeTypeObject = FindObjectChecked<UEnum>(ANY_PACKAGE, TEXT("EFenixSelectorInputDataType"), true);
 	UEdGraphPin* DataTypePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Byte, DataTypeTypeObject, PIN_NAME_DATA_TYPE);
 	DataTypePin->DefaultValue = DataTypeTypeObject->GetNameStringByValue(static_cast<int64>(CurrentDataType));
+	DataTypePin->bNotConnectable = true;
 
 	// Add format pin
-	UEnum* FormatTypeObject = FindObjectChecked<UEnum>(ANY_PACKAGE, TEXT("EFenixSelectorInputFormat"), true);
+	static UEnum* FormatTypeObject = FindObjectChecked<UEnum>(ANY_PACKAGE, TEXT("EFenixSelectorInputFormat"), true);
 	UEdGraphPin* FormatPin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Byte, FormatTypeObject, PIN_NAME_FORMAT);
 	FormatPin->DefaultValue = FormatTypeObject->GetNameStringByValue(static_cast<int64>(CurrentFormat));
+	FormatPin->bNotConnectable = true;
 
 	// Add other pins
 	CreateInOutPins();
@@ -289,6 +272,8 @@ void UK2Node_CookSelectorInput::CreateInOutPins()
 	{
 	case EFenixSelectorInputFormat::Array:
 		InPinParams.ContainerType = EPinContainerType::Array;
+		InPinParams.bIsReference = true;
+		InPinParams.bIsConst = true;
 		switch (CurrentDataType)
 		{
 		case EFenixSelectorInputDataType::Weight:
@@ -303,7 +288,9 @@ void UK2Node_CookSelectorInput::CreateInOutPins()
 		}
 		break;
 	case EFenixSelectorInputFormat::Map:
-		InPinParams.ContainerType = EPinContainerType::Map;		
+		InPinParams.ContainerType = EPinContainerType::Map;
+		InPinParams.bIsReference = true;
+		InPinParams.bIsConst = true;
 		switch (CurrentDataType)
 		{
 		case EFenixSelectorInputDataType::Weight:
@@ -324,26 +311,27 @@ void UK2Node_CookSelectorInput::CreateInOutPins()
 		}
 		break;
 	case EFenixSelectorInputFormat::DataTable:
-		InputPin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Object, UDataTable::StaticClass(), PIN_NAME_DATA_TABLE);
+		InPinParams.bIsConst = true;
+		InputPin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Object, UDataTable::StaticClass(), PIN_NAME_DATA_TABLE, InPinParams);
 		InputPin->DefaultObject = DataTable;
 		switch (CurrentDataType)
 		{
 		case EFenixSelectorInputDataType::Weight:
-			InputDataTableWeightOrProbNamePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, PIN_NAME_WEIGHT_PROPERTY_NAME);
+			InputDataTableWeightOrProbNamePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, PIN_NAME_WEIGHT_PROPERTY_NAME, InPinParams);
 			InputDataTableWeightOrProbNamePin->DefaultValue = WeightPropertyName;
 			break;
 		case EFenixSelectorInputDataType::Prob:
-			InputDataTableWeightOrProbNamePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, PIN_NAME_PROB_PROPERTY_NAME);
+			InputDataTableWeightOrProbNamePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, PIN_NAME_PROB_PROPERTY_NAME, InPinParams);
 			InputDataTableWeightOrProbNamePin->DefaultValue = ProbPropertyName;
 			break;
 		case EFenixSelectorInputDataType::WeightOrProb:
-			InputDataTableWeightOrProbNamePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, PIN_NAME_WEIGHT_OR_PROB_PROPERTY_NAME);
+			InputDataTableWeightOrProbNamePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, PIN_NAME_WEIGHT_OR_PROB_PROPERTY_NAME, InPinParams);
 			InputDataTableWeightOrProbNamePin->DefaultValue = WeightOrProbPropertyName;
-			InputDataTableIsProbNamePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, PIN_NAME_IS_PROB_PROPERTY_NAME);
+			InputDataTableIsProbNamePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, PIN_NAME_IS_PROB_PROPERTY_NAME, InPinParams);
 			InputDataTableIsProbNamePin->DefaultValue = IsProbPropertyName;
 			break;
 		}
-		break;		
+		break;
 	}
 
 	// Output pins
@@ -359,7 +347,7 @@ void UK2Node_CookSelectorInput::CreateInOutPins()
 		CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Real, UEdGraphSchema_K2::PC_Double, PIN_NAME_CUM_PROBS, OutPinParams);
 		break;
 	case EFenixSelectorInputDataType::WeightOrProb:
-		CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Struct, FCookedSelectorDistribution::StaticStruct(), PIN_NAME_COOKED_DISTRIBUTION, OutPinParams);
+		CreatePin(EGPD_Output, UEdGraphSchema_K2::PC_Struct, FCookedSelectorDistribution::StaticStruct(), PIN_NAME_COOKED_DISTRIBUTION);
 		break;
 	}
 	FCreatePinParams OutKeysPinParam;
@@ -378,10 +366,11 @@ void UK2Node_CookSelectorInput::CreateInOutPins()
 void UK2Node_CookSelectorInput::OnDataTypePinUpdated(UEdGraphPin* ChangedPin)
 {
 	// Get new data type
-	UEnum* DataTypeTypeObject = FindObjectChecked<UEnum>(ANY_PACKAGE, TEXT("EFenixSelectorInputDataType"), true);
+	static UEnum* DataTypeTypeObject = FindObjectChecked<UEnum>(ANY_PACKAGE, TEXT("EFenixSelectorInputDataType"), true);
 	const EFenixSelectorInputDataType NewDataType = static_cast<EFenixSelectorInputDataType>(DataTypeTypeObject->GetValueByNameString(ChangedPin->DefaultValue));
 
 	// Input pins
+	FCreatePinParams InPinParams;
 	UEdGraphPin* InputPin = GetInputPin();
 	UEdGraphPin* InputDataTableWeightOrProbNamePin = GetInputDataTableWeightOrProbNamePin();
 	UEdGraphPin* InputDataTableIsProbNamePin = GetInputDataTableIsProbNamePin();
@@ -445,7 +434,8 @@ void UK2Node_CookSelectorInput::OnDataTypePinUpdated(UEdGraphPin* ChangedPin)
 			InputDataTableWeightOrProbNamePin->DefaultValue = WeightOrProbPropertyName;
 			if (!InputDataTableIsProbNamePin)
 			{
-				InputDataTableIsProbNamePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, PIN_NAME_IS_PROB_PROPERTY_NAME);
+				InPinParams.bIsConst = true;
+				InputDataTableIsProbNamePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, PIN_NAME_IS_PROB_PROPERTY_NAME, InPinParams);
 				InputDataTableIsProbNamePin->DefaultValue = IsProbPropertyName;
 			}
 			break;
@@ -501,10 +491,11 @@ void UK2Node_CookSelectorInput::OnDataTypePinUpdated(UEdGraphPin* ChangedPin)
 void UK2Node_CookSelectorInput::OnFormatPinUpdated(UEdGraphPin* ChangedPin)
 {
 	// Get new format
-	UEnum* FormatTypeObject = FindObjectChecked<UEnum>(ANY_PACKAGE, TEXT("EFenixSelectorInputFormat"), true);
+	static UEnum* FormatTypeObject = FindObjectChecked<UEnum>(ANY_PACKAGE, TEXT("EFenixSelectorInputFormat"), true);
 	const EFenixSelectorInputFormat NewFormat = static_cast<EFenixSelectorInputFormat>(FormatTypeObject->GetValueByNameString(ChangedPin->DefaultValue));
 
 	// Input pins
+	FCreatePinParams InPinParams;
 	UEdGraphPin* InputPin = GetInputPin();
 	UEdGraphPin* InputDataTableWeightOrProbNamePin = GetInputDataTableWeightOrProbNamePin();
 	UEdGraphPin* InputDataTableIsProbNamePin = GetInputDataTableIsProbNamePin();
@@ -515,15 +506,15 @@ void UK2Node_CookSelectorInput::OnFormatPinUpdated(UEdGraphPin* ChangedPin)
 		{
 		case EFenixSelectorInputDataType::Weight:
 			InputPin->PinName = PIN_NAME_WEIGHTS;
-			CommonEditorUtils::ChangePinTypeToDoubleArray(InputPin->PinType);
+			CommonEditorUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
 			break;
 		case EFenixSelectorInputDataType::Prob:
 			InputPin->PinName = PIN_NAME_PROBS;
-			CommonEditorUtils::ChangePinTypeToDoubleArray(InputPin->PinType);
+			CommonEditorUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
 			break;
 		case EFenixSelectorInputDataType::WeightOrProb:
 			InputPin->PinName = PIN_NAME_WEIGHT_OR_PROBS;
-			CommonEditorUtils::ChangePinTypeToWeightOrProbArray(InputPin->PinType);
+			CommonEditorUtils::ChangePinTypeToWeightOrProbArrayRef(InputPin->PinType);
 			break;
 		}
 		if (InputDataTableWeightOrProbNamePin)
@@ -540,15 +531,15 @@ void UK2Node_CookSelectorInput::OnFormatPinUpdated(UEdGraphPin* ChangedPin)
 		{
 		case EFenixSelectorInputDataType::Weight:
 			InputPin->PinName = PIN_NAME_WEIGHT_MAP;
-			CommonEditorUtils::ChangePinTypeToDoubleMap(InputPin->PinType);
+			CommonEditorUtils::ChangePinTypeToDoubleMapRef(InputPin->PinType);
 			break;
 		case EFenixSelectorInputDataType::Prob:
 			InputPin->PinName = PIN_NAME_PROB_MAP;
-			CommonEditorUtils::ChangePinTypeToDoubleMap(InputPin->PinType);
+			CommonEditorUtils::ChangePinTypeToDoubleMapRef(InputPin->PinType);
 			break;
 		case EFenixSelectorInputDataType::WeightOrProb:
 			InputPin->PinName = PIN_NAME_WEIGHT_OR_PROB_MAP;
-			CommonEditorUtils::ChangePinTypeToWeightOrProbMap(InputPin->PinType);
+			CommonEditorUtils::ChangePinTypeToWeightOrProbMapRef(InputPin->PinType);
 			break;
 		}
 		if (InputDataTableWeightOrProbNamePin)
@@ -561,34 +552,35 @@ void UK2Node_CookSelectorInput::OnFormatPinUpdated(UEdGraphPin* ChangedPin)
 		}
 		break;
 	case EFenixSelectorInputFormat::DataTable:
+		InPinParams.bIsConst = true;
 		InputPin->PinName = PIN_NAME_DATA_TABLE;
-		CommonEditorUtils::ChangePinTypeToDataTable(InputPin->PinType);
+		CommonEditorUtils::ChangePinTypeToDataTablePtr(InputPin->PinType);
 		InputPin->DefaultObject = DataTable;
 		switch (CurrentDataType)
 		{
 		case EFenixSelectorInputDataType::Weight:
 			if (!InputDataTableWeightOrProbNamePin)
 			{
-				InputDataTableWeightOrProbNamePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, PIN_NAME_WEIGHT_PROPERTY_NAME);
+				InputDataTableWeightOrProbNamePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, PIN_NAME_WEIGHT_PROPERTY_NAME, InPinParams);
 				InputDataTableWeightOrProbNamePin->DefaultValue = WeightPropertyName;
 			}
 			break;
 		case EFenixSelectorInputDataType::Prob:
 			if (!InputDataTableWeightOrProbNamePin)
 			{
-				InputDataTableWeightOrProbNamePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, PIN_NAME_PROB_PROPERTY_NAME);
+				InputDataTableWeightOrProbNamePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, PIN_NAME_PROB_PROPERTY_NAME, InPinParams);
 				InputDataTableWeightOrProbNamePin->DefaultValue = ProbPropertyName;
 			}
 			break;
 		case EFenixSelectorInputDataType::WeightOrProb:
 			if (!InputDataTableWeightOrProbNamePin)
 			{
-				InputDataTableWeightOrProbNamePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, PIN_NAME_WEIGHT_OR_PROB_PROPERTY_NAME);
+				InputDataTableWeightOrProbNamePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, PIN_NAME_WEIGHT_OR_PROB_PROPERTY_NAME, InPinParams);
 				InputDataTableWeightOrProbNamePin->DefaultValue = WeightOrProbPropertyName;
 			}
 			if (!InputDataTableIsProbNamePin)
 			{
-				InputDataTableIsProbNamePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, PIN_NAME_IS_PROB_PROPERTY_NAME);
+				InputDataTableIsProbNamePin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Name, PIN_NAME_IS_PROB_PROPERTY_NAME, InPinParams);
 				InputDataTableIsProbNamePin->DefaultValue = IsProbPropertyName;
 			}
 			break;
@@ -807,8 +799,6 @@ UEdGraphPin* UK2Node_CookSelectorInput::GetOutputKeysPin()
 {
 	switch (CurrentFormat)
 	{
-	case EFenixSelectorInputFormat::Array:
-		return nullptr;
 	case EFenixSelectorInputFormat::Map:
 		return FindPin(PIN_NAME_KEYS);
 	case EFenixSelectorInputFormat::DataTable:

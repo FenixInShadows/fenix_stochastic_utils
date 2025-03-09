@@ -64,10 +64,10 @@ class FENIXSTOCHASTICUTILS_API UK2Node_CookSelectorInput : public UK2Node
 
 	FNodeTextCache CachedToolTip;
 
-	UPROPERTY()  // Need to store this in asset, plus need to use this in ExpandNode for the temperorary node copy.
+	UPROPERTY()  // Need to store this in asset, plus need to use this in ExpandNode for the temporary node copy.
 	EFenixSelectorInputDataType CurrentDataType = EFenixSelectorInputDataType::Weight;
 
-	UPROPERTY()  // Need to store this in asset, plus need to use this in ExpandNode for the temperorary node copy.
+	UPROPERTY()  // Need to store this in asset, plus need to use this in ExpandNode for the temporary node copy.
 	EFenixSelectorInputFormat CurrentFormat = EFenixSelectorInputFormat::Array;
 
 	UPROPERTY()  // Store this in asset for maintaining history/preference.

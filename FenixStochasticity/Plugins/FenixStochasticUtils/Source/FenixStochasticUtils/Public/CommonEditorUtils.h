@@ -19,8 +19,6 @@ public:
 
 	static void CopyPinTypeAndValueTypeInfo(FEdGraphPinType& PinType, const FEdGraphPinType& SrcPinType);
 
-	static void CopyPinValueTypeToPinTypeInfo(FEdGraphPinType& PinType, const FEdGraphTerminalType& SrcPinValueType);
-
 	static void ChangePinCategoryToDouble(FEdGraphPinType& PinType);
 
 	static void ChangePinCategoryToWeightOrProbEntry(FEdGraphPinType& PinType);
@@ -35,15 +33,19 @@ public:
 
 	static void ChangePinTypeToDoubleArray(FEdGraphPinType& PinType);
 
-	static void ChangePinTypeToWeightOrProbArray(FEdGraphPinType& PinType);
+	static void ChangePinTypeToDoubleArrayRef(FEdGraphPinType& PinType);
 
-	static void ChangePinTypeToDoubleMap(FEdGraphPinType& PinType);
+	static void ChangePinTypeToWeightOrProbArrayRef(FEdGraphPinType& PinType);
 
-	static void ChangePinTypeToWeightOrProbMap(FEdGraphPinType& PinType);
+	static void ChangePinTypeToDoubleMapRef(FEdGraphPinType& PinType);
 
-	static void ChangePinTypeToDataTable(FEdGraphPinType& PinType);
+	static void ChangePinTypeToWeightOrProbMapRef(FEdGraphPinType& PinType);
+
+	static void ChangePinTypeToDataTablePtr(FEdGraphPinType& PinType);
 
 	static void ChangePinTypeToCookedSelectorDistribution(FEdGraphPinType& PinType);
+
+	static void ChangePinTypeToCookedSelectorDistributionRef(FEdGraphPinType& PinType);
 
 	static void OnPinConnectionUpdatedWithCategoryInfoSync(UEdGraphPin* Pin, UEdGraphPin* SyncedPin);
 

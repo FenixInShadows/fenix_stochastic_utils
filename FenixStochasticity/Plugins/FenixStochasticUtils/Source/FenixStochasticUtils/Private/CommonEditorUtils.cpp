@@ -18,8 +18,6 @@ void CommonEditorUtils::ChangeToWildCardPinType(FEdGraphPinType& PinType)
 	PinType.PinCategory = UEdGraphSchema_K2::PC_Wildcard;
 	PinType.PinSubCategory = NAME_None;
 	PinType.PinSubCategoryObject = nullptr;
-	PinType.bIsReference = false;
-	PinType.bIsConst = false;
 	PinType.bIsWeakPointer = false;
 	PinType.bIsUObjectWrapper = false;
 	PinType.bSerializeAsSinglePrecisionFloat = false;
@@ -30,8 +28,6 @@ void CommonEditorUtils::CopyPinTypeCategoryInfo(FEdGraphPinType& PinType, const 
 	PinType.PinCategory = SrcPinType.PinCategory;
 	PinType.PinSubCategory = SrcPinType.PinSubCategory;
 	PinType.PinSubCategoryObject = SrcPinType.PinSubCategoryObject;
-	PinType.bIsReference = SrcPinType.bIsReference;
-	PinType.bIsConst = SrcPinType.bIsConst;
 	PinType.bIsWeakPointer = SrcPinType.bIsWeakPointer;
 	PinType.bIsUObjectWrapper = SrcPinType.bIsUObjectWrapper;
 	PinType.bSerializeAsSinglePrecisionFloat = SrcPinType.bSerializeAsSinglePrecisionFloat;
@@ -42,22 +38,10 @@ void CommonEditorUtils::CopyPinTypeAndValueTypeInfo(FEdGraphPinType& PinType, co
 	PinType.PinCategory = SrcPinType.PinCategory;
 	PinType.PinSubCategory = SrcPinType.PinSubCategory;
 	PinType.PinSubCategoryObject = SrcPinType.PinSubCategoryObject;
-	PinType.bIsReference = SrcPinType.bIsReference;
-	PinType.bIsConst = SrcPinType.bIsConst;
 	PinType.bIsWeakPointer = SrcPinType.bIsWeakPointer;
 	PinType.bIsUObjectWrapper = SrcPinType.bIsUObjectWrapper;
 	PinType.bSerializeAsSinglePrecisionFloat = SrcPinType.bSerializeAsSinglePrecisionFloat;
 	PinType.PinValueType = SrcPinType.PinValueType;
-}
-
-void CommonEditorUtils::CopyPinValueTypeToPinTypeInfo(FEdGraphPinType& PinType, const FEdGraphTerminalType& SrcPinValueType)
-{
-	PinType.PinCategory = SrcPinValueType.TerminalCategory;
-	PinType.PinSubCategory = SrcPinValueType.TerminalSubCategory;
-	PinType.PinSubCategoryObject = SrcPinValueType.TerminalSubCategoryObject;
-	PinType.bIsConst = SrcPinValueType.bTerminalIsConst;
-	PinType.bIsWeakPointer = SrcPinValueType.bTerminalIsWeakPointer;
-	PinType.bIsUObjectWrapper = SrcPinValueType.bTerminalIsUObjectWrapper;
 }
 
 void CommonEditorUtils::ChangePinCategoryToDouble(FEdGraphPinType& PinType)
@@ -111,16 +95,27 @@ void CommonEditorUtils::ChangePinTypeToDoubleArray(FEdGraphPinType& PinType)
 	PinType.PinValueType = FEdGraphTerminalType();
 }
 
-void CommonEditorUtils::ChangePinTypeToWeightOrProbArray(FEdGraphPinType& PinType)
+void CommonEditorUtils::ChangePinTypeToDoubleArrayRef(FEdGraphPinType& PinType)
+{
+	PinType.PinCategory = UEdGraphSchema_K2::PC_Real;
+	PinType.PinSubCategory = UEdGraphSchema_K2::PC_Double;
+	PinType.PinSubCategoryObject = nullptr;
+	PinType.ContainerType = EPinContainerType::Array;
+	PinType.PinValueType = FEdGraphTerminalType();
+	PinType.bIsReference = true;
+}
+
+void CommonEditorUtils::ChangePinTypeToWeightOrProbArrayRef(FEdGraphPinType& PinType)
 {
 	PinType.PinCategory = UEdGraphSchema_K2::PC_Struct;
 	PinType.PinSubCategory = NAME_None;
 	PinType.PinSubCategoryObject = FWeightOrProbEntry::StaticStruct();
 	PinType.ContainerType = EPinContainerType::Array;
 	PinType.PinValueType = FEdGraphTerminalType();
+	PinType.bIsReference = true;
 }
 
-void CommonEditorUtils::ChangePinTypeToDoubleMap(FEdGraphPinType& PinType)
+void CommonEditorUtils::ChangePinTypeToDoubleMapRef(FEdGraphPinType& PinType)
 {
 	PinType.PinCategory = UEdGraphSchema_K2::PC_Wildcard;
 	PinType.PinSubCategory = NAME_None;
@@ -130,9 +125,10 @@ void CommonEditorUtils::ChangePinTypeToDoubleMap(FEdGraphPinType& PinType)
 	ValueType.TerminalCategory = UEdGraphSchema_K2::PC_Real;
 	ValueType.TerminalSubCategory = UEdGraphSchema_K2::PC_Double;
 	PinType.PinValueType = ValueType;
+	PinType.bIsReference = true;
 }
 
-void CommonEditorUtils::ChangePinTypeToWeightOrProbMap(FEdGraphPinType& PinType)
+void CommonEditorUtils::ChangePinTypeToWeightOrProbMapRef(FEdGraphPinType& PinType)
 {
 	PinType.PinCategory = UEdGraphSchema_K2::PC_Wildcard;
 	PinType.PinSubCategory = NAME_None;
@@ -142,15 +138,17 @@ void CommonEditorUtils::ChangePinTypeToWeightOrProbMap(FEdGraphPinType& PinType)
 	ValueType.TerminalCategory = UEdGraphSchema_K2::PC_Struct;
 	ValueType.TerminalSubCategoryObject = FWeightOrProbEntry::StaticStruct();
 	PinType.PinValueType = ValueType;
+	PinType.bIsReference = true;
 }
 
-void CommonEditorUtils::ChangePinTypeToDataTable(FEdGraphPinType& PinType)
+void CommonEditorUtils::ChangePinTypeToDataTablePtr(FEdGraphPinType& PinType)
 {
 	PinType.PinCategory = UEdGraphSchema_K2::PC_Object;
 	PinType.PinSubCategory = NAME_None;
 	PinType.PinSubCategoryObject = UDataTable::StaticClass();
 	PinType.ContainerType = EPinContainerType::None;
 	PinType.PinValueType = FEdGraphTerminalType();
+	PinType.bIsReference = false;
 }
 
 void CommonEditorUtils::ChangePinTypeToCookedSelectorDistribution(FEdGraphPinType& PinType)
@@ -160,6 +158,16 @@ void CommonEditorUtils::ChangePinTypeToCookedSelectorDistribution(FEdGraphPinTyp
 	PinType.PinSubCategoryObject = FCookedSelectorDistribution::StaticStruct();
 	PinType.ContainerType = EPinContainerType::None;
 	PinType.PinValueType = FEdGraphTerminalType();
+}
+
+void CommonEditorUtils::ChangePinTypeToCookedSelectorDistributionRef(FEdGraphPinType& PinType)
+{
+	PinType.PinCategory = UEdGraphSchema_K2::PC_Struct;
+	PinType.PinSubCategory = NAME_None;
+	PinType.PinSubCategoryObject = FCookedSelectorDistribution::StaticStruct();
+	PinType.ContainerType = EPinContainerType::None;
+	PinType.PinValueType = FEdGraphTerminalType();
+	PinType.bIsReference = true;
 }
 
 void CommonEditorUtils::OnPinConnectionUpdatedWithCategoryInfoSync(UEdGraphPin* Pin, UEdGraphPin* SyncedPin)
@@ -174,7 +182,7 @@ void CommonEditorUtils::OnPinConnectionUpdatedWithCategoryInfoSync(UEdGraphPin* 
 			ChangeToWildCardPinType(SyncedPinType);
 		}
 	}
-	else
+	else if (PinType.PinCategory == UEdGraphSchema_K2::PC_Wildcard)
 	{
 		UEdGraphPin* NeighborPin = Pin->LinkedTo[0];
 		const FEdGraphPinType& NeighborPinType = NeighborPin->PinType;
@@ -192,7 +200,7 @@ void CommonEditorUtils::OnPinConnectionUpdatedWithCategoryInfoSync(UEdGraphPin* 
 
 bool CommonEditorUtils::PostPinConnectionReconstructionWithCategoryInfoSync(UEdGraphPin* Pin, UEdGraphPin* SyncedPin)
 {
-	if (!Pin->LinkedTo.IsEmpty())
+	if (!Pin->LinkedTo.IsEmpty() && Pin->PinType.PinCategory == UEdGraphSchema_K2::PC_Wildcard)
 	{
 		UEdGraphPin* NeighborPin = Pin->LinkedTo[0];
 		const FEdGraphPinType& NeighborPinType = NeighborPin->PinType;

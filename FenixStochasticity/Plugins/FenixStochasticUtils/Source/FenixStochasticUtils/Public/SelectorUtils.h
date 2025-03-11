@@ -54,7 +54,8 @@ class FENIXSTOCHASTICUTILS_API USelectorUtils : public UBlueprintFunctionLibrary
 	//UFUNCTION(BlueprintCallable)
 	//static URandomSelector* CreateRandomSelector(const FRandomSelectorConfig& Config);
 
-public: // Blueprint and C++ APIs
+public: 
+#pragma region Blueprint and C++ APIs
 	/**
 	* Compute additive cumulation of values, which can be used for computing cumulative weights or probabilities.
 	* Parameter ValueLowerClamp is used for clamping at the lower bounds of each of the values before being cumulated (e.g. regard weights or probabilities as zeros).
@@ -67,7 +68,7 @@ public: // Blueprint and C++ APIs
 	* Compute additive cumulation of values with a cutoff on the total, which can be used for computing cumulative probabilities.
 	* Parameter ValueLowerClamp is used for clamping at the lower bounds of each of the values before being cumulated (e.g. regard weights or probabilities as zeros).
 	* Parameter TotalCutoff is used for cutting off later entries when the earlier entries already cumulates to no less than this parameter (e.g. cut off cumulative probability at 1.0)
-	* Due to possible cut off, the output array may be shorter than the input array. 
+	* Due to possible cut off, the output array may be shorter than the input array.
 	* Best used on cases those original values do not change. Needs remake to update with the change on the original values.
 	*/
 	UFUNCTION(BlueprintCallable, meta = (AdvancedDisplay = 2), Category = "Fenix|SelectorUtils|SelectionPreprocessing")
@@ -85,29 +86,30 @@ public: // Blueprint and C++ APIs
 	/** Get an array of FWeightOrProbEntry's from a data table. */
 	UFUNCTION(BlueprintCallable, Category = "Fenix|SelectorUtils|DataTable")
 	static void GetWeightOrProbEntriesFromDataTable(const UDataTable* DataTable, TArray<FWeightOrProbEntry>& OutEntries, const FName WeightOrProbPropertyName = "WeightOrProb", const FName IsProbPropertyName = "IsProb");
+#pragma endregion
 
-private: // Blueprint only APIs
+#pragma region Blueprint only APIs (for C++ direct usage better use ones in the later section)
 	/**
 	* Select index with given cumulative weights, negative returning value means failure. Not thread safe.
 	* Require input non-negative and non-decreasing.
 	*/
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Select With Cum Weights", NotBlueprintThreadSafe), Category = "Fenix|SelectorUtils|Selection")
-	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithCumWeights(const TArray<double>& CumWeights);
+	static UPARAM(DisplayName = "OutIndex") int32 BPFunc_SelectWithCumWeights(const TArray<double>& CumWeights);
 
 	/**
 	* Select index with given cumulative weights and a random stream (can be seeded), negative returning value means failure.
 	* Require input non-negative and non-decreasing.
 	*/
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Select With Cum Weights From Stream"), Category = "Fenix|SelectorUtils|Selection")
-	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithCumWeightsFromStream(const TArray<double>& CumWeights, const FRandomStream& RandomStream);
+	static UPARAM(DisplayName = "OutIndex") int32 BPFunc_SelectWithCumWeightsFromStream(const TArray<double>& CumWeights, const FRandomStream& RandomStream);
 
 	/** Select index with given weights, negative returning value means failure. Not thread safe.*/
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Select With Weights", NotBlueprintThreadSafe), Category = "Fenix|SelectorUtils|Selection")
-	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithWeights(const TArray<double>& Weights);
+	static UPARAM(DisplayName = "OutIndex") int32 BPFunc_SelectWithWeights(const TArray<double>& Weights);
 
 	/** Select index with given weights and a random stream (can be seeded), negative returning value means failure. */
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Select With Weights From Stream"), Category = "Fenix|SelectorUtils|Selection")
-	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithWeightsFromStream(const TArray<double>& Weights, const FRandomStream& RandomStream);
+	static UPARAM(DisplayName = "OutIndex") int32 BPFunc_SelectWithWeightsFromStream(const TArray<double>& Weights, const FRandomStream& RandomStream);
 
 	/**
 	* Select index with given cumulative probabilities, negative returning value means failure. Not thread safe.
@@ -116,7 +118,7 @@ private: // Blueprint only APIs
 	* Require input non-negative and non-decreasing.
 	*/
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Select With Cum Probs", NotBlueprintThreadSafe), Category = "Fenix|SelectorUtils|Selection")
-	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithCumProbs(const TArray<double>& CumProbs);
+	static UPARAM(DisplayName = "OutIndex") int32 BPFunc_SelectWithCumProbs(const TArray<double>& CumProbs);
 
 	/**
 	* Select index with given cumulative probabilities and a random stream, negative returning value means failure.
@@ -125,7 +127,7 @@ private: // Blueprint only APIs
 	* Require input non-negative and non-decreasing.
 	*/
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Select With Cum Probs From Stream"), Category = "Fenix|SelectorUtils|Selection")
-	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithCumProbsFromStream(const TArray<double>& CumProbs, const FRandomStream& RandomStream);
+	static UPARAM(DisplayName = "OutIndex") int32 BPFunc_SelectWithCumProbsFromStream(const TArray<double>& CumProbs, const FRandomStream& RandomStream);
 	
 	/**
 	* Select index with given probabilities, negative returning value means failure. Not thread safe.
@@ -133,7 +135,7 @@ private: // Blueprint only APIs
 	* If the total is not enough, then when it rolls outside it counts as failure.
 	*/
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Select With Probs", NotBlueprintThreadSafe), Category = "Fenix|SelectorUtils|Selection")
-	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithProbs(const TArray<double>& Probs);
+	static UPARAM(DisplayName = "OutIndex") int32 BPFunc_SelectWithProbs(const TArray<double>& Probs);
 
 	/**
 	* Select index with given probabilities and a random stream, negative returning value means failure.
@@ -141,7 +143,7 @@ private: // Blueprint only APIs
 	* If the total is not enough, then when it rolls outside it counts as failure.
 	*/
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Select With Probs From Stream"), Category = "Fenix|SelectorUtils|Selection")
-	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithProbsFromStream(const TArray<double>& Probs, const FRandomStream& RandomStream);
+	static UPARAM(DisplayName = "OutIndex") int32 BPFunc_SelectWithProbsFromStream(const TArray<double>& Probs, const FRandomStream& RandomStream);
 
 	/**
 	* Select index with given CookedSelectorDistribution, negative returning value means failure. Not thread safe.
@@ -150,7 +152,7 @@ private: // Blueprint only APIs
 	* Require input weights or probs non-negative and non-decreasing.
 	*/
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Select With CookedDistribution", NotBlueprintThreadSafe), Category = "Fenix|SelectorUtils|Selection")
-	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithCookedDistribution(const FCookedSelectorDistribution& Distribution);
+	static UPARAM(DisplayName = "OutIndex") int32 BPFunc_SelectWithCookedDistribution(const FCookedSelectorDistribution& Distribution);
 
 	/**
 	* Select index with given CookedSelectorDistribution and a random stream, negative returning value means failure.
@@ -159,7 +161,7 @@ private: // Blueprint only APIs
 	* Require input weights or probs non-negative and non-decreasing.
 	*/
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Select With CookedDistribution From Stream"), Category = "Fenix|SelectorUtils|Selection")
-	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithCookedDistributionFromStream(const FCookedSelectorDistribution& Distribution, const FRandomStream& RandomStream);
+	static UPARAM(DisplayName = "OutIndex") int32 BPFunc_SelectWithCookedDistributionFromStream(const FCookedSelectorDistribution& Distribution, const FRandomStream& RandomStream);
 
 	/**
 	* Select index with given WeightOrProbEntry's, negative returning value means failure. Not thread safe.
@@ -168,7 +170,7 @@ private: // Blueprint only APIs
 	* If all positive entries are probabilities and the total is not enough, then when it rolls outside it counts as failure.
 	*/
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Select With WeightOrProbEntries", NotBlueprintThreadSafe), Category = "Fenix|SelectorUtils|Selection")
-	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithWeightOrProbEntries(const TArray<FWeightOrProbEntry>& Entries);
+	static UPARAM(DisplayName = "OutIndex") int32 BPFunc_SelectWithWeightOrProbEntries(const TArray<FWeightOrProbEntry>& Entries);
 
 	/**
 	* Select index with given WeightOrProbEntry's and a random stream, negative returning value means failure.
@@ -177,9 +179,10 @@ private: // Blueprint only APIs
 	* If all positive entries are probabilities and the total is not enough, then when it rolls outside it counts as failure.
 	*/
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Select With WeightOrProbEntries From Stream"), Category = "Fenix|SelectorUtils|Selection")
-	static UPARAM(DisplayName = "Out Index") int32 BPFunc_SelectWithWeightOrProbEntriesFromStream(const TArray<FWeightOrProbEntry>& Entries, const FRandomStream& RandomStream);
+	static UPARAM(DisplayName = "OutIndex") int32 BPFunc_SelectWithWeightOrProbEntriesFromStream(const TArray<FWeightOrProbEntry>& Entries, const FRandomStream& RandomStream);
+#pragma endregion
 
-public:  // C++ only APIs
+#pragma region C++ only APIs
 	/**
 	* Select index with given cumulative weights, negative returning value means failure.
 	* Require input non-negative and non-decreasing.
@@ -227,6 +230,7 @@ public:  // C++ only APIs
 	* Using a random stream if the optional input RandomStream is not nullptr. Threadsafe only when using a stream.
 	*/
 	static int32 SelectWithWeightOrProbEntries(const TArray<FWeightOrProbEntry>& Entries, const FRandomStream* RandomStream = nullptr);
+#pragma endregion
 
 private:
 	/** 

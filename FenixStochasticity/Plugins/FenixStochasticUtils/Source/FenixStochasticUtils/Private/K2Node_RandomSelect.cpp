@@ -35,6 +35,199 @@ void UK2Node_RandomSelect::ExpandNode(FKismetCompilerContext& CompilerContext, U
 {
 	Super::ExpandNode(CompilerContext, SourceGraph);
 
+	FName FuncName;
+	FName FuncInputPinName;
+
+	switch (CurrentDataType)
+	{
+	case EFenixSelectorInputDataType::Weight:
+		if (UseCookedInput)
+		{
+			FuncName = UseStream ? GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithCumWeightsFromStream) : GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithCumWeights);
+			FuncInputPinName = "CumWeights";
+		}
+		else
+		{
+			FuncName = UseStream ? GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithWeightsFromStream) : GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithWeights);
+			FuncInputPinName = "Weights";
+		}
+		break;
+	case EFenixSelectorInputDataType::Prob:
+		if (UseCookedInput)
+		{
+			FuncName = UseStream ? GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithCumProbsFromStream) : GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithCumProbs);
+			FuncInputPinName = "CumProbs";
+		}
+		else
+		{
+			FuncName = UseStream ? GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithProbsFromStream) : GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithProbs);
+			FuncInputPinName = "Probs";
+		}
+		break;
+	case EFenixSelectorInputDataType::WeightOrProb:
+		if (UseCookedInput)
+		{
+			FuncName = UseStream ? GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithCookedDistributionFromStream) : GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithCookedDistribution);
+			FuncInputPinName = "Distribution";
+		}
+		else
+		{
+			FuncName = UseStream ? GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithWeightOrProbEntriesFromStream) : GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithWeightOrProbEntries);
+			FuncInputPinName = "Entries";
+		}
+		break;
+	}
+
+	UK2Node_CallFunction* SelectFuncNode = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
+	SelectFuncNode->FunctionReference.SetExternalMember(FuncName, USelectorUtils::StaticClass());
+	SelectFuncNode->AllocateDefaultPins();
+
+	UEdGraphPin* ExecPin = GetExecPin();
+	UEdGraphPin* InputPin = GetInputPin();
+	UEdGraphPin* OutputPin = GetOutputPin();
+	UEdGraphPin* ThenPin = GetThenPin();
+	UEdGraphPin* SelectFuncExecPin = SelectFuncNode->GetExecPin();
+	UEdGraphPin* SelectFuncInputPin = SelectFuncNode->FindPin(FuncInputPinName);
+	UEdGraphPin* SelectFuncOutputPin = SelectFuncNode->GetReturnValuePin();
+	UEdGraphPin* SelectFuncThenPin = SelectFuncNode->GetThenPin();
+
+	switch (CurrentFormat)
+	{
+	case EFenixSelectorInputFormat::Array: // this include the case where UseCookedInput is true
+		{
+			CompilerContext.MovePinLinksToIntermediate(*ExecPin, *SelectFuncExecPin);
+			CompilerContext.MovePinLinksToIntermediate(*InputPin, *SelectFuncInputPin);
+			CompilerContext.MovePinLinksToIntermediate(*OutputPin, *SelectFuncOutputPin);
+			CompilerContext.MovePinLinksToIntermediate(*ThenPin, *SelectFuncThenPin);
+		}
+		break;
+	case EFenixSelectorInputFormat::Map:
+		{
+			UEdGraphPin* OutputKeyPin = GetOutputKeyPin();
+			const FEdGraphPinType& OutputKeyPinType = OutputKeyPin->PinType;
+
+			FuncName = GET_FUNCTION_NAME_CHECKED(UBlueprintMapLibrary, Map_Keys);
+			UK2Node_CallFunction* GetKeysFuncNode = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
+			GetKeysFuncNode->FunctionReference.SetExternalMember(FuncName, UBlueprintMapLibrary::StaticClass());
+			GetKeysFuncNode->AllocateDefaultPins();
+			UEdGraphPin* GetKeysInputPin = GetKeysFuncNode->FindPin(TEXT("TargetMap"));
+			CommonEditorUtils::CopyPinTypeAndValueTypeInfo(GetKeysInputPin->PinType, InputPin->PinType);
+			UEdGraphPin* GetKeysOutputPin = GetKeysFuncNode->FindPin(TEXT("Keys"));
+			CommonEditorUtils::CopyPinTypeCategoryInfo(GetKeysOutputPin->PinType, OutputKeyPinType);
+
+			FuncName = GET_FUNCTION_NAME_CHECKED(UBlueprintMapLibrary, Map_Values);
+			UK2Node_CallFunction* GetValuesFuncNode = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
+			GetValuesFuncNode->FunctionReference.SetExternalMember(FuncName, UBlueprintMapLibrary::StaticClass());
+			GetValuesFuncNode->AllocateDefaultPins();
+			UEdGraphPin* GetValuesInputPin = GetValuesFuncNode->FindPin(TEXT("TargetMap"));
+			CommonEditorUtils::CopyPinTypeAndValueTypeInfo(GetValuesInputPin->PinType, InputPin->PinType);
+			UEdGraphPin* GetValuesOutputPin = GetValuesFuncNode->FindPin(TEXT("Values"));
+			CommonEditorUtils::CopyPinTypeCategoryInfo(GetValuesOutputPin->PinType, SelectFuncInputPin->PinType);
+
+			FuncName = GET_FUNCTION_NAME_CHECKED(UCommonUtils, Array_Get_Impure);
+			UK2Node_CallFunction* GetItemFuncNode = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
+			GetItemFuncNode->FunctionReference.SetExternalMember(FuncName, UCommonUtils::StaticClass());
+			GetItemFuncNode->AllocateDefaultPins();
+			UEdGraphPin* GetItemInputArrayPin = GetItemFuncNode->FindPin(TEXT("TargetArray"));
+			CommonEditorUtils::CopyPinTypeCategoryInfo(GetItemInputArrayPin->PinType, OutputKeyPinType);
+			UEdGraphPin* GetItemInputIndexPin = GetItemFuncNode->FindPin(TEXT("Index"));
+			UEdGraphPin* GetItemOutputItemPin = GetItemFuncNode->FindPin(TEXT("Item"));
+			CommonEditorUtils::CopyPinTypeCategoryInfo(GetItemOutputItemPin->PinType, OutputKeyPinType);
+
+			// Keys = GetKeys(Map) -> Values = GetValues(Map) -> SelectedIndex = Select(Values) => SelectedKey = GetItem(Keys, SelectedIndex) => Return (SelectedIndex, SelectedKey)
+			CompilerContext.MovePinLinksToIntermediate(*ExecPin, *(GetKeysFuncNode->GetExecPin()));
+			CompilerContext.CopyPinLinksToIntermediate(*InputPin, *GetKeysInputPin);
+			GetKeysOutputPin->MakeLinkTo(GetItemInputArrayPin);
+			GetKeysFuncNode->GetThenPin()->MakeLinkTo(GetValuesFuncNode->GetExecPin());
+			CompilerContext.MovePinLinksToIntermediate(*InputPin, *GetValuesInputPin);
+			GetValuesOutputPin->MakeLinkTo(SelectFuncInputPin);
+			GetValuesFuncNode->GetThenPin()->MakeLinkTo(SelectFuncExecPin);
+			CompilerContext.MovePinLinksToIntermediate(*OutputPin, *SelectFuncOutputPin);
+			SelectFuncOutputPin->MakeLinkTo(GetItemInputIndexPin);
+			SelectFuncThenPin->MakeLinkTo(GetItemFuncNode->GetExecPin());
+			CompilerContext.MovePinLinksToIntermediate(*OutputKeyPin, *GetItemOutputItemPin);
+			CompilerContext.MovePinLinksToIntermediate(*ThenPin, *GetItemFuncNode->GetThenPin());
+		}
+		break;
+	case EFenixSelectorInputFormat::DataTable:
+		{
+			UEdGraphPin* OutputKeyPin = GetOutputKeyPin();
+			const FEdGraphPinType& OutputKeyPinType = OutputKeyPin->PinType;
+
+			FuncName = GET_FUNCTION_NAME_CHECKED(UDataTableFunctionLibrary, GetDataTableRowNames);
+			UK2Node_CallFunction* GetKeysFuncNode = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
+			GetKeysFuncNode->FunctionReference.SetExternalMember(FuncName, UDataTableFunctionLibrary::StaticClass());
+			GetKeysFuncNode->AllocateDefaultPins();
+			UEdGraphPin* GetKeysInputPin = GetKeysFuncNode->FindPin(TEXT("Table"));
+			UEdGraphPin* GetKeysOutputPin = GetKeysFuncNode->FindPin(TEXT("OutRowNames"));
+
+			UK2Node_CallFunction* GetValuesFuncNode = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
+			UEdGraphPin* GetValuesInputPin = nullptr;
+			UEdGraphPin* GetValuesWeightOrProbNamePin = nullptr;
+			UEdGraphPin* GetValuesIsProbNamePin = nullptr;
+			UEdGraphPin* GetValuesOutputPin = nullptr;
+			switch (CurrentDataType)
+			{
+			case EFenixSelectorInputDataType::Weight:
+			case EFenixSelectorInputDataType::Prob:
+				FuncName = GET_FUNCTION_NAME_CHECKED(UCommonUtils, GetDataTableColumnAsFloats);
+				GetValuesFuncNode->FunctionReference.SetExternalMember(FuncName, UCommonUtils::StaticClass());
+				GetValuesFuncNode->AllocateDefaultPins();
+				GetValuesInputPin = GetValuesFuncNode->FindPin(TEXT("DataTable"));
+				GetValuesWeightOrProbNamePin = GetValuesFuncNode->FindPin(TEXT("PropertyName"));
+				GetValuesOutputPin = GetValuesFuncNode->FindPin(TEXT("OutValues"));
+				break;
+			case EFenixSelectorInputDataType::WeightOrProb:
+				FuncName = GET_FUNCTION_NAME_CHECKED(USelectorUtils, GetWeightOrProbEntriesFromDataTable);
+				GetValuesFuncNode->FunctionReference.SetExternalMember(FuncName, USelectorUtils::StaticClass());
+				GetValuesFuncNode->AllocateDefaultPins();
+				GetValuesInputPin = GetValuesFuncNode->FindPin(TEXT("DataTable"));
+				GetValuesWeightOrProbNamePin = GetValuesFuncNode->FindPin(TEXT("WeightOrProbPropertyName"));
+				GetValuesIsProbNamePin = GetValuesFuncNode->FindPin(TEXT("IsProbPropertyName"));
+				GetValuesOutputPin = GetValuesFuncNode->FindPin(TEXT("OutEntries"));
+				break;
+			}
+
+			FuncName = GET_FUNCTION_NAME_CHECKED(UCommonUtils, Array_Get_Impure);
+			UK2Node_CallFunction* GetItemFuncNode = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
+			GetItemFuncNode->FunctionReference.SetExternalMember(FuncName, UCommonUtils::StaticClass());
+			GetItemFuncNode->AllocateDefaultPins();
+			UEdGraphPin* GetItemInputArrayPin = GetItemFuncNode->FindPin(TEXT("TargetArray"));
+			CommonEditorUtils::CopyPinTypeCategoryInfo(GetItemInputArrayPin->PinType, OutputKeyPinType);
+			UEdGraphPin* GetItemInputIndexPin = GetItemFuncNode->FindPin(TEXT("Index"));
+			UEdGraphPin* GetItemOutputItemPin = GetItemFuncNode->FindPin(TEXT("Item"));
+			CommonEditorUtils::CopyPinTypeCategoryInfo(GetItemOutputItemPin->PinType, OutputKeyPinType);
+
+			// Keys = GetRowNames(DataTable) -> Values = GetValues(DataTable, LabelNames) -> SelectedIndex = Select(Values) => SelectedKey = GetItem(Keys, SelectedIndex) => Return (SelectedIndex, SelectedKey)
+			CompilerContext.MovePinLinksToIntermediate(*ExecPin, *(GetKeysFuncNode->GetExecPin()));
+			CompilerContext.CopyPinLinksToIntermediate(*InputPin, *GetKeysInputPin);
+			GetKeysOutputPin->MakeLinkTo(GetItemInputArrayPin);
+			GetKeysFuncNode->GetThenPin()->MakeLinkTo(GetValuesFuncNode->GetExecPin());
+			CompilerContext.MovePinLinksToIntermediate(*InputPin, *GetValuesInputPin);
+			CompilerContext.MovePinLinksToIntermediate(*GetInputDataTableWeightOrProbNamePin(), *GetValuesWeightOrProbNamePin);
+			if (GetValuesIsProbNamePin)
+			{
+				CompilerContext.MovePinLinksToIntermediate(*GetInputDataTableIsProbNamePin(), *GetValuesIsProbNamePin);
+			}
+			GetValuesOutputPin->MakeLinkTo(SelectFuncInputPin);
+			GetValuesFuncNode->GetThenPin()->MakeLinkTo(SelectFuncExecPin);
+			CompilerContext.MovePinLinksToIntermediate(*OutputPin, *SelectFuncOutputPin);
+			SelectFuncOutputPin->MakeLinkTo(GetItemInputIndexPin);
+			SelectFuncThenPin->MakeLinkTo(GetItemFuncNode->GetExecPin());
+			CompilerContext.MovePinLinksToIntermediate(*OutputKeyPin, *GetItemOutputItemPin);
+			CompilerContext.MovePinLinksToIntermediate(*ThenPin, *GetItemFuncNode->GetThenPin());
+		}
+		break;
+	}
+
+	if (UseStream)
+	{
+		UEdGraphPin* StreamPin = GetStreamPin();
+		UEdGraphPin* SelectFuncStreamPin = SelectFuncNode->FindPin(TEXT("RandomStream"));
+		CompilerContext.MovePinLinksToIntermediate(*StreamPin, *SelectFuncStreamPin);
+	}
+
+	BreakAllNodeLinks();
 }
 
 void UK2Node_RandomSelect::AllocateDefaultPins()

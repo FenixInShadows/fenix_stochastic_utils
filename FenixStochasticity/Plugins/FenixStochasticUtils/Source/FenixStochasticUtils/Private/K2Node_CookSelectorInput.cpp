@@ -692,7 +692,10 @@ void UK2Node_CookSelectorInput::OnDataTableIsProbNamePinUpdated(UEdGraphPin* Cha
 
 FText UK2Node_CookSelectorInput::GetCurrentTooltip() const
 {
-	FText FormatString = FText::FromString("{0} {1}.");
+	FText FormatString = FText::FromString("{0}{1}.");
+	FText Arg0 = FText();
+	FText Arg1 = FText();
+
 	switch (CurrentDataType)
 	{
 	case EFenixSelectorInputDataType::Weight:
@@ -706,8 +709,6 @@ FText UK2Node_CookSelectorInput::GetCurrentTooltip() const
 		break;
 	}
 
-	FText Arg0 = FText();
-	FText Arg1 = FText();
 	switch (CurrentFormat)
 	{
 	case EFenixSelectorInputFormat::Array:

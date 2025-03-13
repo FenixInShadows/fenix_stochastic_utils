@@ -17,7 +17,11 @@
 
 FText UK2Node_RandomSelect::GetTooltipText() const
 {
-	return FText();
+	if (CachedToolTip.IsOutOfDate(this))
+	{
+		CachedToolTip.SetCachedText(GetCurrentTooltip(), this);
+	}
+	return CachedToolTip;
 }
 
 void UK2Node_RandomSelect::GetMenuActions(FBlueprintActionDatabaseRegistrar& ActionRegister) const
@@ -922,6 +926,69 @@ void UK2Node_RandomSelect::OnDataTableWeightOrProbNamePinUpdated(UEdGraphPin* Ch
 void UK2Node_RandomSelect::OnDataTableIsProbNamePinUpdated(UEdGraphPin* ChangedPin)
 {
 	IsProbPropertyName = ChangedPin->DefaultValue;
+}
+
+FText UK2Node_RandomSelect::GetCurrentTooltip() const
+{
+	FText FormatString = FText::FromString("{0}{1}{2}.");
+	FText Arg0 = FText();
+	FText Arg1 = FText();
+	FText Arg2 = FText();
+
+	if (UseCookedInput)
+	{
+		Arg0 = FText::FromString(" index");
+		switch (CurrentDataType)
+		{
+		case EFenixSelectorInputDataType::Weight:
+			FormatString = FText::FromString("Select {0} with cumulative weights{1}{2}.");
+			break;
+		case EFenixSelectorInputDataType::Prob:
+			FormatString = FText::FromString("Select {0} with cumulative probabilities{1}{2}.");
+			break;
+		case EFenixSelectorInputDataType::WeightOrProb:
+			FormatString = FText::FromString("Select {0} with a CookedSelectorDistribution{1}{2}.");
+			break;
+		}
+	}
+	else
+	{
+		switch (CurrentDataType)
+		{
+		case EFenixSelectorInputDataType::Weight:
+			FormatString = FText::FromString("Select {0} with a weight {1}{2}.");
+			break;
+		case EFenixSelectorInputDataType::Prob:
+			FormatString = FText::FromString("Select {0} with a probability {1}{2}.");
+			break;
+		case EFenixSelectorInputDataType::WeightOrProb:
+			FormatString = FText::FromString("Select {0} with a \"weight or probability\" {1}{2}.");
+			break;
+		}
+
+		switch (CurrentFormat)
+		{
+		case EFenixSelectorInputFormat::Array:
+			Arg0 = FText::FromString("index");
+			Arg1 = FText::FromString("array");
+			break;
+		case EFenixSelectorInputFormat::Map:
+			Arg0 = FText::FromString("index and key");
+			Arg1 = FText::FromString("map");
+			break;
+		case EFenixSelectorInputFormat::DataTable:
+			Arg0 = FText::FromString("index and row name");
+			Arg1 = FText::FromString("data table");
+			break;
+		}
+	}
+
+	if (UseStream)
+	{
+		Arg2 = FText::FromString(" from a random stream");
+	}
+
+	return FText::Format(FormatString, Arg0, Arg1, Arg2);
 }
 
 UEdGraphPin* UK2Node_RandomSelect::GetDataTypePin()

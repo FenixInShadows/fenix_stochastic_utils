@@ -51,6 +51,8 @@ class FENIXSTOCHASTICUTILS_API UK2Node_RandomSelect : public UK2Node
 
 	void OnDataTableIsProbNamePinUpdated(UEdGraphPin* ChangedPin);
 
+	FText GetCurrentTooltip() const;
+
 	UEdGraphPin* GetDataTypePin();
 
 	UEdGraphPin* GetFormatPin();

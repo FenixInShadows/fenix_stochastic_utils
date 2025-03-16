@@ -3,7 +3,7 @@
 
 #include "K2Node_CookSelectorInput.h"
 #include "K2Node_CallFunction.h"
-#include "CommonEditorUtils.h"
+#include "CommonDeveloperUtils.h"
 #include "KismetCompiler.h"
 #include "BlueprintActionDatabaseRegistrar.h"
 #include "BlueprintNodeSpawner.h"
@@ -96,18 +96,18 @@ void UK2Node_CookSelectorInput::ExpandNode(FKismetCompilerContext& CompilerConte
 			GetKeysFuncNode->FunctionReference.SetExternalMember(FuncName, UBlueprintMapLibrary::StaticClass());
 			GetKeysFuncNode->AllocateDefaultPins();
 			UEdGraphPin* GetKeysInputPin = GetKeysFuncNode->FindPin(TEXT("TargetMap"));
-			CommonEditorUtils::CopyPinTypeAndValueTypeInfo(GetKeysInputPin->PinType, InputPin->PinType);
+			CommonDeveloperUtils::CopyPinTypeAndValueTypeInfo(GetKeysInputPin->PinType, InputPin->PinType);
 			UEdGraphPin* GetKeysOutputPin = GetKeysFuncNode->FindPin(TEXT("Keys"));
-			CommonEditorUtils::CopyPinTypeCategoryInfo(GetKeysOutputPin->PinType, OutputKeysPin->PinType);
+			CommonDeveloperUtils::CopyPinTypeCategoryInfo(GetKeysOutputPin->PinType, OutputKeysPin->PinType);
 
 			FuncName = GET_FUNCTION_NAME_CHECKED(UBlueprintMapLibrary, Map_Values);
 			UK2Node_CallFunction* GetValuesFuncNode = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
 			GetValuesFuncNode->FunctionReference.SetExternalMember(FuncName, UBlueprintMapLibrary::StaticClass());
 			GetValuesFuncNode->AllocateDefaultPins();
 			UEdGraphPin* GetValuesInputPin = GetValuesFuncNode->FindPin(TEXT("TargetMap"));
-			CommonEditorUtils::CopyPinTypeAndValueTypeInfo(GetValuesInputPin->PinType, InputPin->PinType);
+			CommonDeveloperUtils::CopyPinTypeAndValueTypeInfo(GetValuesInputPin->PinType, InputPin->PinType);
 			UEdGraphPin* GetValuesOutputPin = GetValuesFuncNode->FindPin(TEXT("Values"));
-			CommonEditorUtils::CopyPinTypeCategoryInfo(GetValuesOutputPin->PinType, CookFuncInputPin->PinType);
+			CommonDeveloperUtils::CopyPinTypeCategoryInfo(GetValuesOutputPin->PinType, CookFuncInputPin->PinType);
 
 			// Keys = GetKeys(Map) -> Values = GetValues(Map) -> Cooked = Cook(Values) => Return (Cooked, Keys)
 			CompilerContext.MovePinLinksToIntermediate(*ExecPin, *(GetKeysFuncNode->GetExecPin()));
@@ -241,11 +241,11 @@ void UK2Node_CookSelectorInput::PinConnectionListChanged(UEdGraphPin* Pin)
 		UEdGraphPin* OutputKeysPin = GetOutputKeysPin();
 		if (Pin == InputPin)
 		{
-			CommonEditorUtils::OnPinConnectionUpdatedWithCategoryInfoSync(InputPin, OutputKeysPin);
+			CommonDeveloperUtils::OnPinConnectionUpdatedWithCategoryInfoSync(InputPin, OutputKeysPin);
 		}
 		else if (Pin == OutputKeysPin)
 		{
-			CommonEditorUtils::OnPinConnectionUpdatedWithCategoryInfoSync(OutputKeysPin, InputPin);
+			CommonDeveloperUtils::OnPinConnectionUpdatedWithCategoryInfoSync(OutputKeysPin, InputPin);
 		}
 	}
 }
@@ -259,10 +259,10 @@ void UK2Node_CookSelectorInput::PostReconstructNode()
 	{
 		UEdGraphPin* InputPin = GetInputPin();
 		UEdGraphPin* OutputKeysPin = GetOutputKeysPin();
-		const bool updated = CommonEditorUtils::PostPinConnectionReconstructionWithCategoryInfoSync(InputPin, OutputKeysPin);
+		const bool updated = CommonDeveloperUtils::PostPinConnectionReconstructionWithCategoryInfoSync(InputPin, OutputKeysPin);
 		if (!updated)
 		{
-			CommonEditorUtils::PostPinConnectionReconstructionWithCategoryInfoSync(OutputKeysPin, InputPin);
+			CommonDeveloperUtils::PostPinConnectionReconstructionWithCategoryInfoSync(OutputKeysPin, InputPin);
 		}
 	}
 }
@@ -387,15 +387,15 @@ void UK2Node_CookSelectorInput::OnDataTypePinUpdated(UEdGraphPin* ChangedPin)
 		{
 		case EFenixSelectorInputDataType::Weight:
 			InputPin->PinName = PIN_NAME_WEIGHTS;
-			CommonEditorUtils::ChangePinCategoryToDouble(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinCategoryToDouble(InputPin->PinType);
 			break;
 		case EFenixSelectorInputDataType::Prob:
 			InputPin->PinName = PIN_NAME_PROBS;
-			CommonEditorUtils::ChangePinCategoryToDouble(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinCategoryToDouble(InputPin->PinType);
 			break;
 		case EFenixSelectorInputDataType::WeightOrProb:
 			InputPin->PinName = PIN_NAME_WEIGHT_OR_PROBS;
-			CommonEditorUtils::ChangePinCategoryToWeightOrProbEntry(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinCategoryToWeightOrProbEntry(InputPin->PinType);
 			break;
 		}
 		break;
@@ -404,15 +404,15 @@ void UK2Node_CookSelectorInput::OnDataTypePinUpdated(UEdGraphPin* ChangedPin)
 		{
 		case EFenixSelectorInputDataType::Weight:
 			InputPin->PinName = PIN_NAME_WEIGHT_MAP;
-			CommonEditorUtils::ChangePinValueCategoryToDouble(InputPin->PinType.PinValueType);
+			CommonDeveloperUtils::ChangePinValueCategoryToDouble(InputPin->PinType.PinValueType);
 			break;
 		case EFenixSelectorInputDataType::Prob:
 			InputPin->PinName = PIN_NAME_PROB_MAP;
-			CommonEditorUtils::ChangePinValueCategoryToDouble(InputPin->PinType.PinValueType);
+			CommonDeveloperUtils::ChangePinValueCategoryToDouble(InputPin->PinType.PinValueType);
 			break;
 		case EFenixSelectorInputDataType::WeightOrProb:
 			InputPin->PinName = PIN_NAME_WEIGHT_OR_PROB_MAP;
-			CommonEditorUtils::ChangePinValueCategoryToWeightOrProbEntry(InputPin->PinType.PinValueType);
+			CommonDeveloperUtils::ChangePinValueCategoryToWeightOrProbEntry(InputPin->PinType.PinValueType);
 			break;
 		}
 		break;
@@ -459,7 +459,7 @@ void UK2Node_CookSelectorInput::OnDataTypePinUpdated(UEdGraphPin* ChangedPin)
 			GetSchema()->RecombinePin(OutputPin->SubPins[0]);
 		}
 		OutputPin->PinName = PIN_NAME_CUM_WEIGHTS;
-		CommonEditorUtils::ChangePinTypeToDoubleArray(OutputPin->PinType);
+		CommonDeveloperUtils::ChangePinTypeToDoubleArray(OutputPin->PinType);
 		break;
 	case EFenixSelectorInputDataType::Prob:
 		if (!OutputPin->SubPins.IsEmpty())
@@ -467,11 +467,11 @@ void UK2Node_CookSelectorInput::OnDataTypePinUpdated(UEdGraphPin* ChangedPin)
 			GetSchema()->RecombinePin(OutputPin->SubPins[0]);
 		}
 		OutputPin->PinName = PIN_NAME_CUM_PROBS;
-		CommonEditorUtils::ChangePinTypeToDoubleArray(OutputPin->PinType);
+		CommonDeveloperUtils::ChangePinTypeToDoubleArray(OutputPin->PinType);
 		break;
 	case EFenixSelectorInputDataType::WeightOrProb:
 		OutputPin->PinName = PIN_NAME_COOKED_DISTRIBUTION;
-		CommonEditorUtils::ChangePinTypeToCookedSelectorDistribution(OutputPin->PinType);
+		CommonDeveloperUtils::ChangePinTypeToCookedSelectorDistribution(OutputPin->PinType);
 		break;
 	}
 
@@ -512,15 +512,15 @@ void UK2Node_CookSelectorInput::OnFormatPinUpdated(UEdGraphPin* ChangedPin)
 		{
 		case EFenixSelectorInputDataType::Weight:
 			InputPin->PinName = PIN_NAME_WEIGHTS;
-			CommonEditorUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
 			break;
 		case EFenixSelectorInputDataType::Prob:
 			InputPin->PinName = PIN_NAME_PROBS;
-			CommonEditorUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
 			break;
 		case EFenixSelectorInputDataType::WeightOrProb:
 			InputPin->PinName = PIN_NAME_WEIGHT_OR_PROBS;
-			CommonEditorUtils::ChangePinTypeToWeightOrProbArrayRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToWeightOrProbArrayRef(InputPin->PinType);
 			break;
 		}
 		if (InputDataTableWeightOrProbNamePin)
@@ -537,15 +537,15 @@ void UK2Node_CookSelectorInput::OnFormatPinUpdated(UEdGraphPin* ChangedPin)
 		{
 		case EFenixSelectorInputDataType::Weight:
 			InputPin->PinName = PIN_NAME_WEIGHT_MAP;
-			CommonEditorUtils::ChangePinTypeToDoubleMapRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToDoubleMapRef(InputPin->PinType);
 			break;
 		case EFenixSelectorInputDataType::Prob:
 			InputPin->PinName = PIN_NAME_PROB_MAP;
-			CommonEditorUtils::ChangePinTypeToDoubleMapRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToDoubleMapRef(InputPin->PinType);
 			break;
 		case EFenixSelectorInputDataType::WeightOrProb:
 			InputPin->PinName = PIN_NAME_WEIGHT_OR_PROB_MAP;
-			CommonEditorUtils::ChangePinTypeToWeightOrProbMapRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToWeightOrProbMapRef(InputPin->PinType);
 			break;
 		}
 		if (InputDataTableWeightOrProbNamePin)
@@ -560,7 +560,7 @@ void UK2Node_CookSelectorInput::OnFormatPinUpdated(UEdGraphPin* ChangedPin)
 	case EFenixSelectorInputFormat::DataTable:
 		InPinParams.bIsConst = true;
 		InputPin->PinName = PIN_NAME_DATA_TABLE;
-		CommonEditorUtils::ChangePinTypeToDataTablePtr(InputPin->PinType);
+		CommonDeveloperUtils::ChangePinTypeToDataTablePtr(InputPin->PinType);
 		InputPin->DefaultObject = DataTable;
 		switch (CurrentDataType)
 		{
@@ -616,7 +616,7 @@ void UK2Node_CookSelectorInput::OnFormatPinUpdated(UEdGraphPin* ChangedPin)
 			OutputKeysPin->PinName = PIN_NAME_KEYS;
 			if (OutputKeysPin->LinkedTo.IsEmpty())
 			{
-				CommonEditorUtils::ChangePinCategoryToWildcard(OutputKeysPin->PinType);
+				CommonDeveloperUtils::ChangePinCategoryToWildcard(OutputKeysPin->PinType);
 			}
 		}
 		break;
@@ -628,7 +628,7 @@ void UK2Node_CookSelectorInput::OnFormatPinUpdated(UEdGraphPin* ChangedPin)
 		else
 		{
 			OutputKeysPin->PinName = PIN_NAME_ROW_NAMES;
-			CommonEditorUtils::ChangePinCategoryToName(OutputKeysPin->PinType);
+			CommonDeveloperUtils::ChangePinCategoryToName(OutputKeysPin->PinType);
 		}
 		break;
 	}

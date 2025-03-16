@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "K2Node.h"
-#include "CommonTypes.h"
+#include "CommonDeveloperTypes.h"
 
 #include "K2Node_RandomSelect.generated.h"
 
@@ -13,7 +13,7 @@
  * Custom node for random selection.
  */
 UCLASS()
-class FENIXSTOCHASTICUTILS_API UK2Node_RandomSelect : public UK2Node
+class FENIXSTOCHASTICUTILSDEVELOPER_API UK2Node_RandomSelect : public UK2Node
 {
 	GENERATED_BODY()
 	

@@ -3,7 +3,7 @@
 
 #include "K2Node_RandomSelect.h"
 #include "K2Node_CallFunction.h"
-#include "CommonEditorUtils.h"
+#include "CommonDeveloperUtils.h"
 #include "KismetCompiler.h"
 #include "BlueprintActionDatabaseRegistrar.h"
 #include "BlueprintNodeSpawner.h"
@@ -115,28 +115,28 @@ void UK2Node_RandomSelect::ExpandNode(FKismetCompilerContext& CompilerContext, U
 			GetKeysFuncNode->FunctionReference.SetExternalMember(FuncName, UBlueprintMapLibrary::StaticClass());
 			GetKeysFuncNode->AllocateDefaultPins();
 			UEdGraphPin* GetKeysInputPin = GetKeysFuncNode->FindPin(TEXT("TargetMap"));
-			CommonEditorUtils::CopyPinTypeAndValueTypeInfo(GetKeysInputPin->PinType, InputPin->PinType);
+			CommonDeveloperUtils::CopyPinTypeAndValueTypeInfo(GetKeysInputPin->PinType, InputPin->PinType);
 			UEdGraphPin* GetKeysOutputPin = GetKeysFuncNode->FindPin(TEXT("Keys"));
-			CommonEditorUtils::CopyPinTypeCategoryInfo(GetKeysOutputPin->PinType, OutputKeyPinType);
+			CommonDeveloperUtils::CopyPinTypeCategoryInfo(GetKeysOutputPin->PinType, OutputKeyPinType);
 
 			FuncName = GET_FUNCTION_NAME_CHECKED(UBlueprintMapLibrary, Map_Values);
 			UK2Node_CallFunction* GetValuesFuncNode = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
 			GetValuesFuncNode->FunctionReference.SetExternalMember(FuncName, UBlueprintMapLibrary::StaticClass());
 			GetValuesFuncNode->AllocateDefaultPins();
 			UEdGraphPin* GetValuesInputPin = GetValuesFuncNode->FindPin(TEXT("TargetMap"));
-			CommonEditorUtils::CopyPinTypeAndValueTypeInfo(GetValuesInputPin->PinType, InputPin->PinType);
+			CommonDeveloperUtils::CopyPinTypeAndValueTypeInfo(GetValuesInputPin->PinType, InputPin->PinType);
 			UEdGraphPin* GetValuesOutputPin = GetValuesFuncNode->FindPin(TEXT("Values"));
-			CommonEditorUtils::CopyPinTypeCategoryInfo(GetValuesOutputPin->PinType, SelectFuncInputPin->PinType);
+			CommonDeveloperUtils::CopyPinTypeCategoryInfo(GetValuesOutputPin->PinType, SelectFuncInputPin->PinType);
 
 			FuncName = GET_FUNCTION_NAME_CHECKED(UCommonUtils, Array_Get_Impure);
 			UK2Node_CallFunction* GetItemFuncNode = CompilerContext.SpawnIntermediateNode<UK2Node_CallFunction>(this, SourceGraph);
 			GetItemFuncNode->FunctionReference.SetExternalMember(FuncName, UCommonUtils::StaticClass());
 			GetItemFuncNode->AllocateDefaultPins();
 			UEdGraphPin* GetItemInputArrayPin = GetItemFuncNode->FindPin(TEXT("TargetArray"));
-			CommonEditorUtils::CopyPinTypeCategoryInfo(GetItemInputArrayPin->PinType, OutputKeyPinType);
+			CommonDeveloperUtils::CopyPinTypeCategoryInfo(GetItemInputArrayPin->PinType, OutputKeyPinType);
 			UEdGraphPin* GetItemInputIndexPin = GetItemFuncNode->FindPin(TEXT("Index"));
 			UEdGraphPin* GetItemOutputItemPin = GetItemFuncNode->FindPin(TEXT("Item"));
-			CommonEditorUtils::CopyPinTypeCategoryInfo(GetItemOutputItemPin->PinType, OutputKeyPinType);
+			CommonDeveloperUtils::CopyPinTypeCategoryInfo(GetItemOutputItemPin->PinType, OutputKeyPinType);
 
 			// Keys = GetKeys(Map) -> Values = GetValues(Map) -> SelectedIndex = Select(Values) => SelectedKey = GetItem(Keys, SelectedIndex) => Return (SelectedIndex, SelectedKey)
 			CompilerContext.MovePinLinksToIntermediate(*ExecPin, *(GetKeysFuncNode->GetExecPin()));
@@ -197,10 +197,10 @@ void UK2Node_RandomSelect::ExpandNode(FKismetCompilerContext& CompilerContext, U
 			GetItemFuncNode->FunctionReference.SetExternalMember(FuncName, UCommonUtils::StaticClass());
 			GetItemFuncNode->AllocateDefaultPins();
 			UEdGraphPin* GetItemInputArrayPin = GetItemFuncNode->FindPin(TEXT("TargetArray"));
-			CommonEditorUtils::CopyPinTypeCategoryInfo(GetItemInputArrayPin->PinType, OutputKeyPinType);
+			CommonDeveloperUtils::CopyPinTypeCategoryInfo(GetItemInputArrayPin->PinType, OutputKeyPinType);
 			UEdGraphPin* GetItemInputIndexPin = GetItemFuncNode->FindPin(TEXT("Index"));
 			UEdGraphPin* GetItemOutputItemPin = GetItemFuncNode->FindPin(TEXT("Item"));
-			CommonEditorUtils::CopyPinTypeCategoryInfo(GetItemOutputItemPin->PinType, OutputKeyPinType);
+			CommonDeveloperUtils::CopyPinTypeCategoryInfo(GetItemOutputItemPin->PinType, OutputKeyPinType);
 
 			// Keys = GetRowNames(DataTable) -> Values = GetValues(DataTable, LabelNames) -> SelectedIndex = Select(Values) => SelectedKey = GetItem(Keys, SelectedIndex) => Return (SelectedIndex, SelectedKey)
 			CompilerContext.MovePinLinksToIntermediate(*ExecPin, *(GetKeysFuncNode->GetExecPin()));
@@ -319,11 +319,11 @@ void UK2Node_RandomSelect::PinConnectionListChanged(UEdGraphPin* Pin)
 		UEdGraphPin* OutputKeyPin = GetOutputKeyPin();
 		if (Pin == InputPin)
 		{
-			CommonEditorUtils::OnPinConnectionUpdatedWithCategoryInfoSync(InputPin, OutputKeyPin);
+			CommonDeveloperUtils::OnPinConnectionUpdatedWithCategoryInfoSync(InputPin, OutputKeyPin);
 		}
 		else if (Pin == OutputKeyPin)
 		{
-			CommonEditorUtils::OnPinConnectionUpdatedWithCategoryInfoSync(OutputKeyPin, InputPin);
+			CommonDeveloperUtils::OnPinConnectionUpdatedWithCategoryInfoSync(OutputKeyPin, InputPin);
 		}
 	}
 }
@@ -337,10 +337,10 @@ void UK2Node_RandomSelect::PostReconstructNode()
 	{
 		UEdGraphPin* InputPin = GetInputPin();
 		UEdGraphPin* OutputKeyPin = GetOutputKeyPin();
-		const bool updated = CommonEditorUtils::PostPinConnectionReconstructionWithCategoryInfoSync(InputPin, OutputKeyPin);
+		const bool updated = CommonDeveloperUtils::PostPinConnectionReconstructionWithCategoryInfoSync(InputPin, OutputKeyPin);
 		if (!updated)
 		{
-			CommonEditorUtils::PostPinConnectionReconstructionWithCategoryInfoSync(OutputKeyPin, InputPin);
+			CommonDeveloperUtils::PostPinConnectionReconstructionWithCategoryInfoSync(OutputKeyPin, InputPin);
 		}
 	}
 }
@@ -485,7 +485,7 @@ void UK2Node_RandomSelect::OnDataTypePinUpdated(UEdGraphPin* ChangedPin)
 				GetSchema()->RecombinePin(InputPin->SubPins[0]);
 			}
 			InputPin->PinName = PIN_NAME_CUM_WEIGHTS;
-			CommonEditorUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
 			break;
 		case EFenixSelectorInputDataType::Prob:
 			if (!InputPin->SubPins.IsEmpty())
@@ -493,11 +493,11 @@ void UK2Node_RandomSelect::OnDataTypePinUpdated(UEdGraphPin* ChangedPin)
 				GetSchema()->RecombinePin(InputPin->SubPins[0]);
 			}
 			InputPin->PinName = PIN_NAME_CUM_PROBS;
-			CommonEditorUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
 			break;
 		case EFenixSelectorInputDataType::WeightOrProb:
 			InputPin->PinName = PIN_NAME_COOKED_DISTRIBUTION;
-			CommonEditorUtils::ChangePinTypeToCookedSelectorDistributionRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToCookedSelectorDistributionRef(InputPin->PinType);
 			break;
 		}
 	}
@@ -510,15 +510,15 @@ void UK2Node_RandomSelect::OnDataTypePinUpdated(UEdGraphPin* ChangedPin)
 			{
 			case EFenixSelectorInputDataType::Weight:
 				InputPin->PinName = PIN_NAME_WEIGHTS;
-				CommonEditorUtils::ChangePinCategoryToDouble(InputPin->PinType);
+				CommonDeveloperUtils::ChangePinCategoryToDouble(InputPin->PinType);
 				break;
 			case EFenixSelectorInputDataType::Prob:
 				InputPin->PinName = PIN_NAME_PROBS;
-				CommonEditorUtils::ChangePinCategoryToDouble(InputPin->PinType);
+				CommonDeveloperUtils::ChangePinCategoryToDouble(InputPin->PinType);
 				break;
 			case EFenixSelectorInputDataType::WeightOrProb:
 				InputPin->PinName = PIN_NAME_WEIGHT_OR_PROBS;
-				CommonEditorUtils::ChangePinCategoryToWeightOrProbEntry(InputPin->PinType);
+				CommonDeveloperUtils::ChangePinCategoryToWeightOrProbEntry(InputPin->PinType);
 				break;
 			}
 			break;
@@ -527,15 +527,15 @@ void UK2Node_RandomSelect::OnDataTypePinUpdated(UEdGraphPin* ChangedPin)
 			{
 			case EFenixSelectorInputDataType::Weight:
 				InputPin->PinName = PIN_NAME_WEIGHT_MAP;
-				CommonEditorUtils::ChangePinValueCategoryToDouble(InputPin->PinType.PinValueType);
+				CommonDeveloperUtils::ChangePinValueCategoryToDouble(InputPin->PinType.PinValueType);
 				break;
 			case EFenixSelectorInputDataType::Prob:
 				InputPin->PinName = PIN_NAME_PROB_MAP;
-				CommonEditorUtils::ChangePinValueCategoryToDouble(InputPin->PinType.PinValueType);
+				CommonDeveloperUtils::ChangePinValueCategoryToDouble(InputPin->PinType.PinValueType);
 				break;
 			case EFenixSelectorInputDataType::WeightOrProb:
 				InputPin->PinName = PIN_NAME_WEIGHT_OR_PROB_MAP;
-				CommonEditorUtils::ChangePinValueCategoryToWeightOrProbEntry(InputPin->PinType.PinValueType);
+				CommonDeveloperUtils::ChangePinValueCategoryToWeightOrProbEntry(InputPin->PinType.PinValueType);
 				break;
 			}
 			break;
@@ -607,15 +607,15 @@ void UK2Node_RandomSelect::OnFormatPinUpdated(UEdGraphPin* ChangedPin)
 		{
 		case EFenixSelectorInputDataType::Weight:
 			InputPin->PinName = PIN_NAME_WEIGHTS;
-			CommonEditorUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
 			break;
 		case EFenixSelectorInputDataType::Prob:
 			InputPin->PinName = PIN_NAME_PROBS;
-			CommonEditorUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
 			break;
 		case EFenixSelectorInputDataType::WeightOrProb:
 			InputPin->PinName = PIN_NAME_WEIGHT_OR_PROBS;
-			CommonEditorUtils::ChangePinTypeToWeightOrProbArrayRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToWeightOrProbArrayRef(InputPin->PinType);
 			break;
 		}
 		if (InputDataTableWeightOrProbNamePin)
@@ -632,15 +632,15 @@ void UK2Node_RandomSelect::OnFormatPinUpdated(UEdGraphPin* ChangedPin)
 		{
 		case EFenixSelectorInputDataType::Weight:
 			InputPin->PinName = PIN_NAME_WEIGHT_MAP;
-			CommonEditorUtils::ChangePinTypeToDoubleMapRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToDoubleMapRef(InputPin->PinType);
 			break;
 		case EFenixSelectorInputDataType::Prob:
 			InputPin->PinName = PIN_NAME_PROB_MAP;
-			CommonEditorUtils::ChangePinTypeToDoubleMapRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToDoubleMapRef(InputPin->PinType);
 			break;
 		case EFenixSelectorInputDataType::WeightOrProb:
 			InputPin->PinName = PIN_NAME_WEIGHT_OR_PROB_MAP;
-			CommonEditorUtils::ChangePinTypeToWeightOrProbMapRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToWeightOrProbMapRef(InputPin->PinType);
 			break;
 		}
 		if (InputDataTableWeightOrProbNamePin)
@@ -655,7 +655,7 @@ void UK2Node_RandomSelect::OnFormatPinUpdated(UEdGraphPin* ChangedPin)
 	case EFenixSelectorInputFormat::DataTable:
 		InPinParams.bIsConst = true;
 		InputPin->PinName = PIN_NAME_DATA_TABLE;
-		CommonEditorUtils::ChangePinTypeToDataTablePtr(InputPin->PinType);
+		CommonDeveloperUtils::ChangePinTypeToDataTablePtr(InputPin->PinType);
 		InputPin->DefaultObject = DataTable;
 		switch (CurrentDataType)
 		{
@@ -717,7 +717,7 @@ void UK2Node_RandomSelect::OnFormatPinUpdated(UEdGraphPin* ChangedPin)
 			OutputKeyPin->PinName = PIN_NAME_SELECTED_KEY;
 			if (OutputKeyPin->LinkedTo.IsEmpty())
 			{
-				CommonEditorUtils::ChangePinCategoryToWildcard(OutputKeyPin->PinType);
+				CommonDeveloperUtils::ChangePinCategoryToWildcard(OutputKeyPin->PinType);
 			}
 		}
 		break;
@@ -729,7 +729,7 @@ void UK2Node_RandomSelect::OnFormatPinUpdated(UEdGraphPin* ChangedPin)
 		else
 		{
 			OutputKeyPin->PinName = PIN_NAME_SELECTED_ROW_NAME;
-			CommonEditorUtils::ChangePinCategoryToName(OutputKeyPin->PinType);
+			CommonDeveloperUtils::ChangePinCategoryToName(OutputKeyPin->PinType);
 		}
 		break;
 	}
@@ -779,15 +779,15 @@ void UK2Node_RandomSelect::OnUseCookedInputPinUpdated(UEdGraphPin* ChangedPin)
 		{
 		case EFenixSelectorInputDataType::Weight:
 			InputPin->PinName = PIN_NAME_CUM_WEIGHTS;
-			CommonEditorUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
 			break;
 		case EFenixSelectorInputDataType::Prob:
 			InputPin->PinName = PIN_NAME_CUM_PROBS;
-			CommonEditorUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
 			break;
 		case EFenixSelectorInputDataType::WeightOrProb:
 			InputPin->PinName = PIN_NAME_COOKED_DISTRIBUTION;
-			CommonEditorUtils::ChangePinTypeToCookedSelectorDistributionRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToCookedSelectorDistributionRef(InputPin->PinType);
 			break;
 		}
 	}
@@ -811,15 +811,15 @@ void UK2Node_RandomSelect::OnUseCookedInputPinUpdated(UEdGraphPin* ChangedPin)
 		{
 		case EFenixSelectorInputDataType::Weight:
 			InputPin->PinName = PIN_NAME_WEIGHTS;
-			CommonEditorUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
 			break;
 		case EFenixSelectorInputDataType::Prob:
 			InputPin->PinName = PIN_NAME_PROBS;
-			CommonEditorUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToDoubleArrayRef(InputPin->PinType);
 			break;
 		case EFenixSelectorInputDataType::WeightOrProb:
 			InputPin->PinName = PIN_NAME_WEIGHT_OR_PROBS;
-			CommonEditorUtils::ChangePinTypeToWeightOrProbArrayRef(InputPin->PinType);
+			CommonDeveloperUtils::ChangePinTypeToWeightOrProbArrayRef(InputPin->PinType);
 			break;
 		}
 	}

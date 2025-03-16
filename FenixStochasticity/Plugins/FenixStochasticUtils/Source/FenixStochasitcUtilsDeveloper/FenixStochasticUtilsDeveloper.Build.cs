@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class FenixStochasticUtils : ModuleRules
+public class FenixStochasticUtilsDeveloper : ModuleRules
 {
-	public FenixStochasticUtils(ReadOnlyTargetRules Target) : base(Target)
+	public FenixStochasticUtilsDeveloper(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
@@ -26,6 +26,7 @@ public class FenixStochasticUtils : ModuleRules
 			new string[]
 			{
 				"Core",
+				"FenixStochasticUtils",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -38,6 +39,10 @@ public class FenixStochasticUtils : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+				"KismetCompiler",
+				"BlueprintGraph",
+				"UnrealEd",
+				"FenixStochasticUtils",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

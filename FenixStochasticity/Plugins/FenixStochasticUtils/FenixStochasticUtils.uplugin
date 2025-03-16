@@ -18,6 +18,11 @@
 		{
 			"Name": "FenixStochasticUtils",
 			"Type": "Runtime",
+			"LoadingPhase": "PreDefault"
+		},
+		{
+			"Name": "FenixStochasticUtilsDeveloper",
+			"Type": "Developer",
 			"LoadingPhase": "Default"
 		}
 	]

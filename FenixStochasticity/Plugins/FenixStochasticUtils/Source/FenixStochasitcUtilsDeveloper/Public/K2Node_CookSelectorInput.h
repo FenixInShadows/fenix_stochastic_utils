@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "K2Node.h"
-#include "CommonTypes.h"
+#include "CommonDeveloperTypes.h"
 
 #include "K2Node_CookSelectorInput.generated.h"
 
@@ -12,7 +12,7 @@
  * Custom node for preprocessing inputs to random selectors, for better performance if later repeatedly used.
  */
 UCLASS()
-class FENIXSTOCHASTICUTILS_API UK2Node_CookSelectorInput : public UK2Node
+class FENIXSTOCHASTICUTILSDEVELOPER_API UK2Node_CookSelectorInput : public UK2Node
 {
 	GENERATED_BODY()
 

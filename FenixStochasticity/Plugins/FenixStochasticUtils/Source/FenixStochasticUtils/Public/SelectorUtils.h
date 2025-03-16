@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/Classes/Engine/DataTable.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "RandomSelector.h"
 
@@ -13,6 +14,24 @@
 */
 USTRUCT(BlueprintType)
 struct FENIXSTOCHASTICUTILS_API FWeightOrProbEntry
+{
+	GENERATED_BODY()
+
+	/** Weight or probability value. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	double WeightOrProb = 1.0;
+
+	/** Whether it records probability (as opposed to weight). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool IsProb = false;
+};
+
+/**
+* A config recording a weight or probability (also recording which type it is).
+* For use in data table row.
+*/
+USTRUCT(BlueprintType)
+struct FENIXSTOCHASTICUTILS_API FWeightOrProbTableRow : public FTableRowBase
 {
 	GENERATED_BODY()
 

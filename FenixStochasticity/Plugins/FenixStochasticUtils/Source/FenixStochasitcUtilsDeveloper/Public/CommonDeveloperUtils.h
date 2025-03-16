@@ -7,11 +7,11 @@
 /**
  * 
  */
-class FENIXSTOCHASTICUTILS_API CommonEditorUtils
+class FENIXSTOCHASTICUTILSDEVELOPER_API CommonDeveloperUtils
 {
 public:
-	CommonEditorUtils();
-	~CommonEditorUtils();
+	CommonDeveloperUtils();
+	~CommonDeveloperUtils();
 
 	static void ChangeToWildCardPinType(FEdGraphPinType& PinType);
 

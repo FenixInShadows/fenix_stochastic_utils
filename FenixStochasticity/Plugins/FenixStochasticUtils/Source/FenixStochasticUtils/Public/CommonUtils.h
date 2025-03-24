@@ -110,4 +110,8 @@ public:
 	{
 		return RandomStream ? RandomStream->FRandRange(InMin, InMax) : FMath::FRandRange(InMin, InMax);
 	}
+
+	/** Platform time can be used to measure execution time. */
+	UFUNCTION(BlueprintCallable, Category = "Fenix|CommonUtils|Timing")
+	static double GetCurrentPlatformTime();
 };

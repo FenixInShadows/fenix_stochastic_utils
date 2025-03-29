@@ -199,6 +199,14 @@ int32 USelectorUtils::BPFunc_SelectWithWeightOrProbEntriesFromStream(const TArra
 	return SelectWithWeightOrProbEntries(Entries, &RandomStream);
 }
 
+FName USelectorUtils::BPFunc_SelectWithWeightOrProbDataTable(const UDataTable* DataTable, const FName WeightOrProbPropertyName, const FName IsProbPropertyName)
+{
+	TArray<FWeightOrProbEntry> WeightOrProbEntries;
+	GetWeightOrProbEntriesFromDataTable(DataTable, WeightOrProbEntries, WeightOrProbPropertyName, IsProbPropertyName);
+	const int32 SelectedIndex = SelectWithWeightOrProbEntries(WeightOrProbEntries);
+	return DataTable->GetRowNames()[SelectedIndex];
+}
+
 int32 USelectorUtils::SelectWithCumWeights(const TArray<double>& CumWeights, const FRandomStream* RandomStream)
 {
 	const int32 Num = CumWeights.Num();

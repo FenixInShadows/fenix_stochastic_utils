@@ -199,6 +199,13 @@ public:
 	*/
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Select With WeightOrProbEntries From Stream"), Category = "Fenix|SelectorUtils|Selection")
 	static UPARAM(DisplayName = "OutIndex") int32 BPFunc_SelectWithWeightOrProbEntriesFromStream(const TArray<FWeightOrProbEntry>& Entries, const FRandomStream& RandomStream);
+
+
+	/**
+	* Selecting from DataTable containing WeightOrProbEntries with one blueprint unit node.
+	*/
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Select With WeightOrProbDataTable"), Category = "Fenix|SelectorUtils|Selection")
+	static UPARAM(DisplayName = "SelectedRowName") FName BPFunc_SelectWithWeightOrProbDataTable(const UDataTable * DataTable, const FName WeightOrProbPropertyName = "WeightOrProb", const FName IsProbPropertyName = "IsProb");
 #pragma endregion
 
 #pragma region C++ only APIs

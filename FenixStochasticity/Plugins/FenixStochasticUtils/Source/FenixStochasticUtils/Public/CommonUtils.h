@@ -114,4 +114,24 @@ public:
 	/** Platform time can be used to measure execution time. */
 	UFUNCTION(BlueprintCallable, Category = "Fenix|CommonUtils|Timing")
 	static double GetCurrentPlatformTime();
+
+	UFUNCTION(BlueprintCallable)
+	static void Step1(const TArray<double>& TestArray, TArray<double>& OutArray);
+
+	UFUNCTION(BlueprintCallable)
+	static void Step2(const TArray<double>& TestArray, TArray<double>& OutArray);
+
+	UFUNCTION(BlueprintCallable)
+	static void Step3(const TArray<double>& TestArray, TArray<double>& OutArray);
+
+	UFUNCTION(BlueprintCallable)
+	static void CombinedSteps(const TArray<double>& TestArray, TArray<double>& OutArray);
+
+	static void MakeSimpleCumulativesRaw(const TArray<double>& Values, TArray<double>& OutCumulatives);
+	static void Step1Raw(const TArray<double>& TestArray, TArray<double>& OutArray);
+	static void Step2Raw(const TArray<double>& TestArray, TArray<double>& OutArray);
+	static void Step3Raw(const TArray<double>& TestArray, TArray<double>& OutArray);
+
+	UFUNCTION(BlueprintCallable)
+	static void CombinedStepsRaw(const TArray<double>& TestArray, TArray<double>& OutArray);
 };

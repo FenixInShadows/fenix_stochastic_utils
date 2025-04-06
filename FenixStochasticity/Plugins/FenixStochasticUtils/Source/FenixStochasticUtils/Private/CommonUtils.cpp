@@ -108,3 +108,62 @@ double UCommonUtils::GetCurrentPlatformTime()
 {
 	return FPlatformTime::Seconds();
 }
+
+void UCommonUtils::Step1(const TArray<double>& TestArray, TArray<double>& OutArray)
+{
+	MakeSimpleCumulatives(TestArray, OutArray);
+}
+
+void UCommonUtils::Step2(const TArray<double>& TestArray, TArray<double>& OutArray)
+{
+	MakeSimpleCumulatives(TestArray, OutArray);
+}
+
+void UCommonUtils::Step3(const TArray<double>& TestArray, TArray<double>& OutArray)
+{
+	MakeSimpleCumulatives(TestArray, OutArray);
+}
+
+void UCommonUtils::CombinedSteps(const TArray<double>& TestArray, TArray<double>& OutArray)
+{
+	Step1(TestArray, OutArray);
+	Step2(TestArray, OutArray);
+	Step3(TestArray, OutArray);
+}
+
+void UCommonUtils::MakeSimpleCumulativesRaw(const TArray<double>& Values, TArray<double>& OutCumulatives)
+{
+	const int32 Num = Values.Num();
+
+	OutCumulatives.SetNum(Num);
+	double SumValue = 0.0;
+
+	for (int32 Idx = 0; Idx < Num; Idx++)
+	{
+		SumValue += Values[Idx];
+		OutCumulatives[Idx] = SumValue;
+	}
+}
+
+void UCommonUtils::Step1Raw(const TArray<double>& TestArray, TArray<double>& OutArray)
+{
+	MakeSimpleCumulativesRaw(TestArray, OutArray);
+}
+
+void UCommonUtils::Step2Raw(const TArray<double>& TestArray, TArray<double>& OutArray)
+{
+	MakeSimpleCumulativesRaw(TestArray, OutArray);
+}
+
+void UCommonUtils::Step3Raw(const TArray<double>& TestArray, TArray<double>& OutArray)
+{
+	MakeSimpleCumulativesRaw(TestArray, OutArray);
+}
+
+void UCommonUtils::CombinedStepsRaw(const TArray<double>& TestArray, TArray<double>& OutArray)
+{
+	Step1Raw(TestArray, OutArray);
+	Step2Raw(TestArray, OutArray);
+	Step3Raw(TestArray, OutArray);
+}
+

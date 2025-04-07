@@ -21,6 +21,11 @@
 			"LoadingPhase": "PreDefault"
 		},
 		{
+			"Name": "FenixStochasticUtilsTest",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
 			"Name": "FenixStochasticUtilsDeveloper",
 			"Type": "Developer",
 			"LoadingPhase": "Default"

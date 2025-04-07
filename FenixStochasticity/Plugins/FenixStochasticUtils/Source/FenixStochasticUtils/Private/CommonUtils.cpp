@@ -103,8 +103,3 @@ void UCommonUtils::MakeSimpleCumulatives(const TArray<double>& Values, TArray<do
 		OutCumulatives[Idx] = SumValue;
 	}
 }
-
-double UCommonUtils::GetCurrentPlatformTime()
-{
-	return FPlatformTime::Seconds();
-}

@@ -9,6 +9,12 @@ int32 UCommonUtils::BinarySearchForInsertion(const double TargetKey, const TArra
 	return BinarySearchForInsertionInSegment(TargetKey, IncreasingKeys, 0, IncreasingKeys.Num());
 }
 
+void UCommonUtils::Array_Get_Impure(const TArray<int32>& TargetArray, const int32 Index, int32& Item)
+{
+	// We should never hit these!  They're stubs to avoid NoExport on the class.  Call the Generic* equivalent instead
+	check(0);
+}
+
 void UCommonUtils::GetDataTableColumnAsFloats(const UDataTable* DataTable, const FName PropertyName, TArray<double>& OutValues)
 {
 	OutValues.Empty();

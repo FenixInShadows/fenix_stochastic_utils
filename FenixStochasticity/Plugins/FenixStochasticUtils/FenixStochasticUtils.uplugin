@@ -29,6 +29,11 @@
 			"Name": "FenixStochasticUtilsDeveloper",
 			"Type": "Developer",
 			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "FenixStochasticUtilsEditor",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
 		}
 	]
 }

@@ -4,8 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Engine/Classes/Engine/DataTable.h"
-#include "Kismet/BlueprintFunctionLibrary.h"
-#include "RandomSelector.h"
 
 #include "SelectorUtils.generated.h"
 
@@ -68,10 +66,6 @@ UCLASS(meta = (BlueprintThreadSafe))
 class FENIXSTOCHASTICUTILS_API USelectorUtils : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
-
-	///** Create and return a RandomSelector. */
-	//UFUNCTION(BlueprintCallable)
-	//static URandomSelector* CreateRandomSelector(const FRandomSelectorConfig& Config);
 
 public: 
 #pragma region Blueprint and C++ APIs

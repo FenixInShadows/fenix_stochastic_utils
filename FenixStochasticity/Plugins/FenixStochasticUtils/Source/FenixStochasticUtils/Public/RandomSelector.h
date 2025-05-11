@@ -21,4 +21,8 @@ class FENIXSTOCHASTICUTILS_API URandomSelector : public UObject
 {
 	GENERATED_BODY()
 	
+public:
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite)*/
+	UPROPERTY(EditDefaultsOnly)
+	double testFloat = 2.0;
 };

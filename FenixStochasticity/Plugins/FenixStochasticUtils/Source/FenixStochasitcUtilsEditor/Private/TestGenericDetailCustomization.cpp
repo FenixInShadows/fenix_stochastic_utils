@@ -1,11 +1,12 @@
-﻿#include "TestCustomClassSettings.h"
+﻿#include "TestGenericDetailCustomization.h"
 #include "MyActor.h"
+#include "UObject/UnrealType.h"
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
 #include "Widgets/Input/SSlider.h"
 
-void FTestCustomClassSettings::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
+void FTestGenericDetailCustomization::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 {	
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 
@@ -28,12 +29,27 @@ void FTestCustomClassSettings::CustomizeDetails(IDetailLayoutBuilder& DetailLayo
 				.HAlign(HAlign_Fill)
 				[
 					SNew(SSlider)
-						.OnValueChanged(this, &FTestCustomClassSettings::OnValueChanged)
 				];
 		}
+
+		UPropertyWrapper* PropertyWrapperPtr = Cast<UPropertyWrapper>(SelectedObjects[0].Get());
+		if (PropertyWrapperPtr)
+		{
+			FStructProperty* StructPropertyPtr = CastField<FStructProperty>(PropertyWrapperPtr->GetProperty());
+			if (StructPropertyPtr && StructPropertyPtr->Struct->IsChildOf(FMyStruct::StaticStruct()))
+			{
+				IDetailCategoryBuilder& CustomCategory = DetailLayout.EditCategory("CustomMyStruct", FText::FromString("Test My Struct"));
+				CustomCategory.SetSortOrder(0);
+				CustomCategory.AddCustomRow(FText::FromString("CustomMyStruct"))
+					.ValueContent()
+					.VAlign(VAlign_Center)
+					.HAlign(HAlign_Fill)
+					[
+						SNew(SSlider)
+					];
+			}
+		}
+
 	}
 }
 
-void FTestCustomClassSettings::OnValueChanged(const float NewValue) const
-{
-}

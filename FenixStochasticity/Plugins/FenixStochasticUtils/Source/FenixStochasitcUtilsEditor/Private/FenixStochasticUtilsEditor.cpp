@@ -2,7 +2,8 @@
 
 #include "FenixStochasticUtilsEditor.h"
 #include "TestCustomDetails.h"
-#include "TestCustomClassSettings.h"
+#include "TestGenericDetailCustomization.h"
+#include "TestCustomPropertyType.h"
 #include "MyActor.h"
 // #include "SMyBlueprint.h"
 
@@ -12,6 +13,7 @@ void FFenixStochasticUtilsEditorModule::StartupModule()
 {
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyModule.RegisterCustomClassLayout(AMyActor::StaticClass()->GetFName(), FOnGetDetailCustomizationInstance::CreateStatic(&FTestCustomDetails::MakeInstance));
+    PropertyModule.RegisterCustomPropertyTypeLayout(FMyStruct::StaticStruct()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FTestCustomPropertyType::MakeInstance));
 
     FBlueprintEditorModule& BlueprintEditorModule = FModuleManager::LoadModuleChecked<FBlueprintEditorModule>("Kismet");
     BlueprintEditorModule.OnRegisterTabsForEditor().AddRaw(this, &FFenixStochasticUtilsEditorModule::HandleRegisterBlueprintEditorTab);
@@ -21,6 +23,7 @@ void FFenixStochasticUtilsEditorModule::ShutdownModule()
 {
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyModule.UnregisterCustomClassLayout(AMyActor::StaticClass()->GetFName());
+    PropertyModule.UnregisterCustomPropertyTypeLayout(FMyStruct::StaticStruct()->GetFName());
 }
 
 void FFenixStochasticUtilsEditorModule::HandleRegisterBlueprintEditorTab(FWorkflowAllowedTabSet& AllowedTabSet, FName ModeName, TSharedPtr<FBlueprintEditor> InEditor)
@@ -34,7 +37,7 @@ void FFenixStochasticUtilsEditorModule::HandleRegisterBlueprintEditorTab(FWorkfl
     TSharedPtr<IDetailsView> DetailsView = PropertyModule.FindDetailView("BlueprintInspector");
     if (DetailsView.IsValid())
     {
-        DetailsView->SetGenericLayoutDetailsDelegate(FOnGetDetailCustomizationInstance::CreateStatic(&FTestCustomClassSettings::MakeInstance));
+        DetailsView->SetGenericLayoutDetailsDelegate(FOnGetDetailCustomizationInstance::CreateStatic(&FTestGenericDetailCustomization::MakeInstance));
     }
 }
 

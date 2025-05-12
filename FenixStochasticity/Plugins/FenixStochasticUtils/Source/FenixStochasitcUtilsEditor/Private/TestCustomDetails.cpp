@@ -14,7 +14,7 @@ void FTestCustomDetails::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 		.HAlign(HAlign_Fill)
 		[
 			SNew(SSlider)
-			.OnValueChanged(this, &FTestCustomDetails::OnValueChanged)
+				.OnValueChanged(this, &FTestCustomDetails::OnValueChanged)
 		];
 }
 

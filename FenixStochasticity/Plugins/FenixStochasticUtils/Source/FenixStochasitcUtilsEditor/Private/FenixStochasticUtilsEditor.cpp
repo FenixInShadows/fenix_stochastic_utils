@@ -2,10 +2,10 @@
 
 #include "FenixStochasticUtilsEditor.h"
 #include "TestCustomDetails.h"
+#include "TestCustomDetailsForSceneComponent.h"
 #include "TestGenericDetailCustomization.h"
 #include "TestCustomPropertyType.h"
 #include "MyActor.h"
-// #include "SMyBlueprint.h"
 
 #define LOCTEXT_NAMESPACE "FFenixStochasticUtilsEditorModule"
 
@@ -13,6 +13,7 @@ void FFenixStochasticUtilsEditorModule::StartupModule()
 {
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyModule.RegisterCustomClassLayout(AMyActor::StaticClass()->GetFName(), FOnGetDetailCustomizationInstance::CreateStatic(&FTestCustomDetails::MakeInstance));
+    PropertyModule.RegisterCustomClassLayout(USceneComponent::StaticClass()->GetFName(), FOnGetDetailCustomizationInstance::CreateStatic(&FTestCustomDetailsForSceneComponent::MakeInstance));
     PropertyModule.RegisterCustomPropertyTypeLayout(FMyStruct::StaticStruct()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FTestCustomPropertyType::MakeInstance));
 
     FBlueprintEditorModule& BlueprintEditorModule = FModuleManager::LoadModuleChecked<FBlueprintEditorModule>("Kismet");
@@ -23,17 +24,15 @@ void FFenixStochasticUtilsEditorModule::ShutdownModule()
 {
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyModule.UnregisterCustomClassLayout(AMyActor::StaticClass()->GetFName());
+    PropertyModule.UnregisterCustomClassLayout(USceneComponent::StaticClass()->GetFName());
     PropertyModule.UnregisterCustomPropertyTypeLayout(FMyStruct::StaticStruct()->GetFName());
 }
 
 void FFenixStochasticUtilsEditorModule::HandleRegisterBlueprintEditorTab(FWorkflowAllowedTabSet& AllowedTabSet, FName ModeName, TSharedPtr<FBlueprintEditor> InEditor)
 {
-    /*if (InEditor->GetBlueprintObj()->GeneratedClass->IsChildOf(URandomSelector::StaticClass()))
-    {
-        InEditor->GetMyBlueprintWidget()->SetVisibility(EVisibility::Hidden);
-    }*/
-
     FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+
+
     TSharedPtr<IDetailsView> DetailsView = PropertyModule.FindDetailView("BlueprintInspector");
     if (DetailsView.IsValid())
     {

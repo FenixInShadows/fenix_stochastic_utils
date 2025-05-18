@@ -3,8 +3,6 @@
 #include "CoreMinimal.h"
 #include "IPropertyTypeCustomization.h"
 
-class IDetailLayoutBuilder;
-
 class FTestCustomPropertyType : public IPropertyTypeCustomization
 {
 public:

@@ -259,8 +259,8 @@ void UK2Node_CookSelectorInput::PostReconstructNode()
 	{
 		UEdGraphPin* InputPin = GetInputPin();
 		UEdGraphPin* OutputKeysPin = GetOutputKeysPin();
-		const bool updated = CommonDeveloperUtils::PostPinConnectionReconstructionWithCategoryInfoSync(InputPin, OutputKeysPin);
-		if (!updated)
+		const bool bUpdated = CommonDeveloperUtils::PostPinConnectionReconstructionWithCategoryInfoSync(InputPin, OutputKeysPin);
+		if (!bUpdated)
 		{
 			CommonDeveloperUtils::PostPinConnectionReconstructionWithCategoryInfoSync(OutputKeysPin, InputPin);
 		}

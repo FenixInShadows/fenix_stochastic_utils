@@ -21,7 +21,7 @@ struct FENIXSTOCHASTICUTILS_API FWeightOrProbEntry
 
 	/** Whether it records probability (as opposed to weight). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool IsProb = false;
+	bool bIsProb = false;
 };
 
 /**
@@ -39,7 +39,7 @@ struct FENIXSTOCHASTICUTILS_API FWeightOrProbTableRow : public FTableRowBase
 
 	/** Whether it records probability (as opposed to weight). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool IsProb = false;
+	bool IsProb = false;  // Note: Better not use prefix "b" for fields in child struct of FTableRowBase
 };
 
 /**
@@ -56,7 +56,7 @@ struct FENIXSTOCHASTICUTILS_API FCookedSelectorDistribution
 
 	/** Whether it records probabilities (as opposed to weights). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool IsProbs = false;
+	bool bIsProbs = false;
 };
 
 /**

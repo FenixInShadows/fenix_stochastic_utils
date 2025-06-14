@@ -17,7 +17,7 @@ void FTestCustomDetailsForSceneComponent::CustomizeDetails(IDetailLayoutBuilder&
 	{
 		if (USceneComponent* SceneComp = Cast<USceneComponent>(Object.Get()))
 		{
-			bool NeedHide = false;
+			bool bNeedHide = false;
 			if (SceneComp->HasAnyFlags(RF_ArchetypeObject))
 			{
 				UBlueprintGeneratedClass* OuterGeneratedClass = Cast<UBlueprintGeneratedClass>(SceneComp->GetOuter());
@@ -33,7 +33,7 @@ void FTestCustomDetailsForSceneComponent::CustomizeDetails(IDetailLayoutBuilder&
 							{
 								if (Node->IsRootNode() && Node->ParentComponentOrVariableName == NAME_None)
 								{
-									NeedHide = true;
+									bNeedHide = true;
 								}
 							}
 						}
@@ -49,7 +49,7 @@ void FTestCustomDetailsForSceneComponent::CustomizeDetails(IDetailLayoutBuilder&
 								USceneComponent* RootComp = Cast<USceneComponent>(Node->ComponentTemplate.Get());
 								if (RootComp == SceneComp)
 								{
-									NeedHide = true;
+									bNeedHide = true;
 									break;
 								}
 							}
@@ -62,11 +62,11 @@ void FTestCustomDetailsForSceneComponent::CustomizeDetails(IDetailLayoutBuilder&
 				AActor* Owner = SceneComp->GetOwner();
 				if (Owner->GetClass()->IsChildOf(AMyActor::StaticClass()) && Owner->GetRootComponent() == SceneComp)
 				{
-					NeedHide = true;
+					bNeedHide = true;
 				}
 			}
 			
-			if (NeedHide)
+			if (bNeedHide)
 			{
 				DetailBuilder.HideCategory("TransformCommon");
 				DetailBuilder.HideCategory("Transform");

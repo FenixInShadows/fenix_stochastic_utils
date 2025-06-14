@@ -28,12 +28,12 @@ public:
 	AMyActor();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Custom")
-	bool CanEditMyData = true;
+	bool bCanEditMyData = true;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Custom", meta = (DisplayName="MyData1", EditCondition="CanEditMyData"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Custom", meta = (DisplayName="MyData1", EditCondition="bCanEditMyData"))
 	FMyStruct MyStructData1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Custom", meta = (DisplayName="MyData2", EditCondition="CanEditMyData", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Custom", meta = (DisplayName="MyData2", EditCondition="bCanEditMyData", EditConditionHides))
 	FMyStruct MyStructData2;
 
 	UPROPERTY(EditAnywhere)

@@ -54,7 +54,7 @@ void USelectorUtils::CookSelectorDistribution(const TArray<FWeightOrProbEntry>& 
 
 	for (int32 Idx = 0; Idx < Num; Idx++)
 	{
-		if (Entries[Idx].IsProb)
+		if (Entries[Idx].bIsProb)
 		{
 			SumProb += FMath::Max(Entries[Idx].WeightOrProb, 0.0);
 		}
@@ -66,11 +66,11 @@ void USelectorUtils::CookSelectorDistribution(const TArray<FWeightOrProbEntry>& 
 
 	if (SumProb == 0.0)  // pure weights
 	{
-		OutDistribution.IsProbs = false;
+		OutDistribution.bIsProbs = false;
 		SumWeight = 0.0;
 		for (int32 Idx = 0; Idx < Num; Idx++)
 		{
-			if (!Entries[Idx].IsProb)
+			if (!Entries[Idx].bIsProb)
 			{
 				SumWeight += FMath::Max(Entries[Idx].WeightOrProb, 0.0);
 			}
@@ -79,11 +79,11 @@ void USelectorUtils::CookSelectorDistribution(const TArray<FWeightOrProbEntry>& 
 	}
 	else if (SumWeight == 0.0 || 1.0 - SumProb < 1e-6)  // pure probabilities
 	{
-		OutDistribution.IsProbs = true;
+		OutDistribution.bIsProbs = true;
 		SumProb = 0.0;
 		for (int32 Idx = 0; Idx < Num; Idx++)
 		{
-			if (Entries[Idx].IsProb)
+			if (Entries[Idx].bIsProb)
 			{
 				SumProb += FMath::Max(Entries[Idx].WeightOrProb, 0.0);
 			}
@@ -93,12 +93,12 @@ void USelectorUtils::CookSelectorDistribution(const TArray<FWeightOrProbEntry>& 
 	}
 	else  // mixture: convert to weights
 	{
-		OutDistribution.IsProbs = false;
+		OutDistribution.bIsProbs = false;
 		const double WeightFactor = SumWeight / (1.0 - SumProb);
 		SumWeight = 0.0;
 		for (int32 Idx = 0; Idx < Num; Idx++)
 		{
-			if (Entries[Idx].IsProb)
+			if (Entries[Idx].bIsProb)
 			{
 				SumWeight += FMath::Max(Entries[Idx].WeightOrProb, 0.0) * WeightFactor;
 			}
@@ -284,7 +284,7 @@ int32 USelectorUtils::SelectWithProbs(const TArray<double>& Probs, const FRandom
 
 int32 USelectorUtils::SelectWithCookedDistribution(const FCookedSelectorDistribution& Distribution, const FRandomStream* RandomStream)
 {
-	if (Distribution.IsProbs)
+	if (Distribution.bIsProbs)
 	{
 		return SelectWithCumProbs(Distribution.CumWeightsOrCumProbs, RandomStream);
 	}
@@ -303,7 +303,7 @@ int32 USelectorUtils::SelectWithWeightOrProbEntries(const TArray<FWeightOrProbEn
 	double SumProb = 0.0;
 	for (int32 Idx = 0; Idx < Num; Idx++)
 	{
-		if (Entries[Idx].IsProb)
+		if (Entries[Idx].bIsProb)
 		{
 			SumProb += FMath::Max(Entries[Idx].WeightOrProb, 0.0);
 		}
@@ -326,7 +326,7 @@ int32 USelectorUtils::SelectWithWeightOrProbEntries(const TArray<FWeightOrProbEn
 		CumWeights.SetNum(Num);
 		for (int32 Idx = 0; Idx < Num; Idx++)
 		{
-			if (!Entries[Idx].IsProb)
+			if (!Entries[Idx].bIsProb)
 			{
 				SumWeight += FMath::Max(Entries[Idx].WeightOrProb, 0.0);
 			}
@@ -343,7 +343,7 @@ int32 USelectorUtils::SelectWithWeightOrProbEntries(const TArray<FWeightOrProbEn
 		CumProbs.SetNum(Num);
 		for (int32 Idx = 0; Idx < Num; Idx++)
 		{
-			if (Entries[Idx].IsProb)
+			if (Entries[Idx].bIsProb)
 			{
 				SumProb += FMath::Max(Entries[Idx].WeightOrProb, 0.0);
 			}
@@ -365,7 +365,7 @@ int32 USelectorUtils::SelectWithWeightOrProbEntries(const TArray<FWeightOrProbEn
 	CumWeights.SetNum(Num);
 	for (int32 Idx = 0; Idx < Num; Idx++)
 	{
-		if (Entries[Idx].IsProb)
+		if (Entries[Idx].bIsProb)
 		{
 			SumWeight += FMath::Max(Entries[Idx].WeightOrProb, 0.0) * WeightFactor;
 		}

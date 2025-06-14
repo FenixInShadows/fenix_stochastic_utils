@@ -82,10 +82,10 @@ class FENIXSTOCHASTICUTILSDEVELOPER_API UK2Node_RandomSelect : public UK2Node
 	EFenixSelectorInputFormat CurrentFormat = EFenixSelectorInputFormat::Array;
 
 	UPROPERTY()  // Need to store this in asset, plus need to use this in ExpandNode for the temporary node copy.
-	bool UseCookedInput = false;
+	bool bUseCookedInput = false;
 	
 	UPROPERTY()  // Need to store this in asset, plus need to use this in ExpandNode for the temporary node copy.
-	bool UseStream = false;
+	bool bUseStream = false;
 
 	UPROPERTY()  // Store this in asset for maintaining history/preference.
 	TObjectPtr<UObject> DataTable;

@@ -45,38 +45,38 @@ void UK2Node_RandomSelect::ExpandNode(FKismetCompilerContext& CompilerContext, U
 	switch (CurrentDataType)
 	{
 	case EFenixSelectorInputDataType::Weight:
-		if (UseCookedInput)
+		if (bUseCookedInput)
 		{
-			FuncName = UseStream ? GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithCumWeightsFromStream) : GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithCumWeights);
+			FuncName = bUseStream ? GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithCumWeightsFromStream) : GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithCumWeights);
 			FuncInputPinName = "CumWeights";
 		}
 		else
 		{
-			FuncName = UseStream ? GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithWeightsFromStream) : GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithWeights);
+			FuncName = bUseStream ? GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithWeightsFromStream) : GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithWeights);
 			FuncInputPinName = "Weights";
 		}
 		break;
 	case EFenixSelectorInputDataType::Prob:
-		if (UseCookedInput)
+		if (bUseCookedInput)
 		{
-			FuncName = UseStream ? GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithCumProbsFromStream) : GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithCumProbs);
+			FuncName = bUseStream ? GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithCumProbsFromStream) : GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithCumProbs);
 			FuncInputPinName = "CumProbs";
 		}
 		else
 		{
-			FuncName = UseStream ? GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithProbsFromStream) : GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithProbs);
+			FuncName = bUseStream ? GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithProbsFromStream) : GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithProbs);
 			FuncInputPinName = "Probs";
 		}
 		break;
 	case EFenixSelectorInputDataType::WeightOrProb:
-		if (UseCookedInput)
+		if (bUseCookedInput)
 		{
-			FuncName = UseStream ? GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithCookedDistributionFromStream) : GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithCookedDistribution);
+			FuncName = bUseStream ? GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithCookedDistributionFromStream) : GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithCookedDistribution);
 			FuncInputPinName = "Distribution";
 		}
 		else
 		{
-			FuncName = UseStream ? GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithWeightOrProbEntriesFromStream) : GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithWeightOrProbEntries);
+			FuncName = bUseStream ? GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithWeightOrProbEntriesFromStream) : GET_FUNCTION_NAME_CHECKED(USelectorUtils, BPFunc_SelectWithWeightOrProbEntries);
 			FuncInputPinName = "Entries";
 		}
 		break;
@@ -97,7 +97,7 @@ void UK2Node_RandomSelect::ExpandNode(FKismetCompilerContext& CompilerContext, U
 
 	switch (CurrentFormat)
 	{
-	case EFenixSelectorInputFormat::Array: // this include the case where UseCookedInput is true
+	case EFenixSelectorInputFormat::Array: // this include the case where bUseCookedInput is true
 		{
 			CompilerContext.MovePinLinksToIntermediate(*ExecPin, *SelectFuncExecPin);
 			CompilerContext.MovePinLinksToIntermediate(*InputPin, *SelectFuncInputPin);
@@ -224,7 +224,7 @@ void UK2Node_RandomSelect::ExpandNode(FKismetCompilerContext& CompilerContext, U
 		break;
 	}
 
-	if (UseStream)
+	if (bUseStream)
 	{
 		UEdGraphPin* StreamPin = GetStreamPin();
 		UEdGraphPin* SelectFuncStreamPin = SelectFuncNode->FindPin(TEXT("RandomStream"));
@@ -247,7 +247,7 @@ void UK2Node_RandomSelect::AllocateDefaultPins()
 	DataTypePin->bNotConnectable = true;
 
 	// Add format pin (only if not using cooked input)
-	if (UseCookedInput)
+	if (bUseCookedInput)
 	{
 		CurrentFormat = EFenixSelectorInputFormat::Array;
 	}
@@ -261,12 +261,12 @@ void UK2Node_RandomSelect::AllocateDefaultPins()
 
 	// Add use cooked input pin
 	UEdGraphPin* UseCookedInputPin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Boolean, PIN_NAME_USE_COOKED_INPUT);
-	UseCookedInputPin->DefaultValue = UKismetStringLibrary::Conv_BoolToString(UseCookedInput);
+	UseCookedInputPin->DefaultValue = UKismetStringLibrary::Conv_BoolToString(bUseCookedInput);
 	UseCookedInputPin->bNotConnectable = true;
 
 	// Add use stream pin
 	UEdGraphPin* UseStreamPin = CreatePin(EGPD_Input, UEdGraphSchema_K2::PC_Boolean, PIN_NAME_USE_STREAM);
-	UseStreamPin->DefaultValue = UKismetStringLibrary::Conv_BoolToString(UseStream);
+	UseStreamPin->DefaultValue = UKismetStringLibrary::Conv_BoolToString(bUseStream);
 	UseStreamPin->bNotConnectable = true;
 
 	// Add other pins
@@ -337,8 +337,8 @@ void UK2Node_RandomSelect::PostReconstructNode()
 	{
 		UEdGraphPin* InputPin = GetInputPin();
 		UEdGraphPin* OutputKeyPin = GetOutputKeyPin();
-		const bool updated = CommonDeveloperUtils::PostPinConnectionReconstructionWithCategoryInfoSync(InputPin, OutputKeyPin);
-		if (!updated)
+		const bool bUpdated = CommonDeveloperUtils::PostPinConnectionReconstructionWithCategoryInfoSync(InputPin, OutputKeyPin);
+		if (!bUpdated)
 		{
 			CommonDeveloperUtils::PostPinConnectionReconstructionWithCategoryInfoSync(OutputKeyPin, InputPin);
 		}
@@ -350,7 +350,7 @@ void UK2Node_RandomSelect::CreateInOutPins()
 	// Input pins (not including stream)
 	FCreatePinParams InPinParams;
 	UEdGraphPin* InputPin;
-	if (UseCookedInput)
+	if (bUseCookedInput)
 	{
 		InPinParams.bIsReference = true;
 		InPinParams.bIsConst = true;
@@ -441,7 +441,7 @@ void UK2Node_RandomSelect::CreateInOutPins()
 	}
 
 	// Input stream pin
-	if (UseStream)
+	if (bUseStream)
 	{
 		FCreatePinParams StreamPinParams;
 		StreamPinParams.bIsReference = true;
@@ -475,7 +475,7 @@ void UK2Node_RandomSelect::OnDataTypePinUpdated(UEdGraphPin* ChangedPin)
 	UEdGraphPin* InputPin = GetInputPin();
 	UEdGraphPin* InputDataTableWeightOrProbNamePin = GetInputDataTableWeightOrProbNamePin();
 	UEdGraphPin* InputDataTableIsProbNamePin = GetInputDataTableIsProbNamePin();
-	if (UseCookedInput)
+	if (bUseCookedInput)
 	{
 		switch (NewDataType)
 		{
@@ -763,12 +763,12 @@ void UK2Node_RandomSelect::OnFormatPinUpdated(UEdGraphPin* ChangedPin)
 void UK2Node_RandomSelect::OnUseCookedInputPinUpdated(UEdGraphPin* ChangedPin)
 {
 	// Get new use cooked input flag
-	const bool NewUseCookedInput = ChangedPin->DefaultValue.ToBool();
+	const bool bNewUseCookedInput = ChangedPin->DefaultValue.ToBool();
 
 	// Format Pin and InputPin (not including data table property names pin and stream pin)
 	UEdGraphPin* FormatPin = GetFormatPin();
 	UEdGraphPin* InputPin = GetInputPin();
-	if (NewUseCookedInput)
+	if (bNewUseCookedInput)
 	{
 		if (FormatPin)
 		{
@@ -846,7 +846,7 @@ void UK2Node_RandomSelect::OnUseCookedInputPinUpdated(UEdGraphPin* ChangedPin)
 	}
 
 	// Update the use cooked input flag and set format to be array
-	UseCookedInput = NewUseCookedInput;
+	bUseCookedInput = bNewUseCookedInput;
 	CurrentFormat = EFenixSelectorInputFormat::Array;
 
 	// Mark dirty/modified
@@ -864,11 +864,11 @@ void UK2Node_RandomSelect::OnUseCookedInputPinUpdated(UEdGraphPin* ChangedPin)
 void UK2Node_RandomSelect::OnUseStreamPinUpdated(UEdGraphPin* ChangedPin)
 {
 	// Get new use stream flag
-	UseStream = ChangedPin->DefaultValue.ToBool();
+	bUseStream = ChangedPin->DefaultValue.ToBool();
 
 	// Create/remove stream pin
 	UEdGraphPin* StreamPin = GetStreamPin();
-	if (UseStream)
+	if (bUseStream)
 	{
 		if (!StreamPin)
 		{
@@ -935,7 +935,7 @@ FText UK2Node_RandomSelect::GetCurrentTooltip() const
 	FText Arg1 = FText();
 	FText Arg2 = FText();
 
-	if (UseCookedInput)
+	if (bUseCookedInput)
 	{
 		Arg0 = FText::FromString(" index");
 		switch (CurrentDataType)
@@ -983,7 +983,7 @@ FText UK2Node_RandomSelect::GetCurrentTooltip() const
 		}
 	}
 
-	if (UseStream)
+	if (bUseStream)
 	{
 		Arg2 = FText::FromString(" from a random stream");
 	}
@@ -1013,7 +1013,7 @@ UEdGraphPin* UK2Node_RandomSelect::GetUseStreamPin()
 
 UEdGraphPin* UK2Node_RandomSelect::GetInputPin()
 {
-	if (UseCookedInput)
+	if (bUseCookedInput)
 	{
 		switch (CurrentDataType)
 		{

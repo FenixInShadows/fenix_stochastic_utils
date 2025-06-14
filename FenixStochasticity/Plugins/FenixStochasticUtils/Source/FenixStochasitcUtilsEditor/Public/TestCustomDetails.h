@@ -9,9 +9,10 @@ public:
 	static TSharedRef<IDetailCustomization> MakeInstance() { return MakeShareable(new FTestCustomDetails); }
 
 protected:
-	TArray<TWeakObjectPtr<UObject>> SelectedObjects;
-	FNotifyHook* NotifyHook;
-
 	virtual void CustomizeDetails(class IDetailLayoutBuilder& DetailBuilder) override;
 	void OnValueChanged(float NewValue) const;
+	USceneComponent* GetRootComponentTemplate(UBlueprintGeneratedClass* ActorGeneratedClass) const;
+
+	TArray<TWeakObjectPtr<UObject>> SelectedObjects;
+	FNotifyHook* NotifyHook;
 };

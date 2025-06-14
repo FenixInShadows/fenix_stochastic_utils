@@ -17,7 +17,7 @@ void FFenixStochasticUtilsEditorModule::StartupModule()
     PropertyModule.RegisterCustomPropertyTypeLayout(FMyStruct::StaticStruct()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FTestCustomPropertyType::MakeInstance));
 
     FBlueprintEditorModule& BlueprintEditorModule = FModuleManager::LoadModuleChecked<FBlueprintEditorModule>("Kismet");
-    BlueprintEditorModule.OnRegisterTabsForEditor().AddRaw(this, &FFenixStochasticUtilsEditorModule::HandleRegisterBlueprintEditorTab);
+    OnRegisterTabHandle = BlueprintEditorModule.OnRegisterTabsForEditor().AddRaw(this, &FFenixStochasticUtilsEditorModule::HandleRegisterBlueprintEditorTab);
 }
 
 void FFenixStochasticUtilsEditorModule::ShutdownModule()
@@ -26,12 +26,14 @@ void FFenixStochasticUtilsEditorModule::ShutdownModule()
 	PropertyModule.UnregisterCustomClassLayout(AMyActor::StaticClass()->GetFName());
     PropertyModule.UnregisterCustomClassLayout(USceneComponent::StaticClass()->GetFName());
     PropertyModule.UnregisterCustomPropertyTypeLayout(FMyStruct::StaticStruct()->GetFName());
+
+    FBlueprintEditorModule& BlueprintEditorModule = FModuleManager::LoadModuleChecked<FBlueprintEditorModule>("Kismet");
+    BlueprintEditorModule.OnRegisterTabsForEditor().Remove(OnRegisterTabHandle);
 }
 
 void FFenixStochasticUtilsEditorModule::HandleRegisterBlueprintEditorTab(FWorkflowAllowedTabSet& AllowedTabSet, FName ModeName, TSharedPtr<FBlueprintEditor> InEditor)
 {
     FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
-
 
     TSharedPtr<IDetailsView> DetailsView = PropertyModule.FindDetailView("BlueprintInspector");
     if (DetailsView.IsValid())

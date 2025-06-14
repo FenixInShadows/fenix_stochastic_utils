@@ -6,14 +6,23 @@
 
 void FTestCustomPropertyType::CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
+	StructPropertyHandle = PropertyHandle;
+
+	TArray<void*> RawStructData;
+	StructPropertyHandle->AccessRawData(RawStructData);
+	FMyStruct* MyStructPtr = static_cast<FMyStruct*>(RawStructData[0]);
+	float InitValue = MyStructPtr->Value / 10.0f;
+
+
 	HeaderRow
 		.NameContent()
 		[
-			PropertyHandle->CreatePropertyNameWidget()
+			StructPropertyHandle->CreatePropertyNameWidget()
 		]
 		.ValueContent()
 		[
 			SNew(SSlider)
+				.Value(InitValue)
 				.OnValueChanged(this, &FTestCustomPropertyType::OnValueChanged)
 		];
 }
@@ -26,4 +35,6 @@ void FTestCustomPropertyType::CustomizeChildren(TSharedRef<IPropertyHandle> Prop
 
 void FTestCustomPropertyType::OnValueChanged(const float NewValue) const
 {
+	FString FormattedString = FString::Printf(TEXT("(Value=%.2f)"), NewValue * 10.0);
+	StructPropertyHandle->SetValueFromFormattedString(FormattedString);
 }

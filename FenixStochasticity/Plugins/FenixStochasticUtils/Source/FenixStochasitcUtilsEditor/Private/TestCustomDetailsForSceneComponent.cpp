@@ -7,6 +7,7 @@
 #include "IPropertyUtilities.h"
 #include "BlueprintEditor.h"
 #include "Engine/SCS_Node.h" 
+#include "Engine/InheritableComponentHandler.h"
 
 void FTestCustomDetailsForSceneComponent::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
@@ -17,20 +18,41 @@ void FTestCustomDetailsForSceneComponent::CustomizeDetails(IDetailLayoutBuilder&
 		if (USceneComponent* SceneComp = Cast<USceneComponent>(Object.Get()))
 		{
 			bool NeedHide = false;
-			if (Object->HasAnyFlags(RF_ArchetypeObject))
+			if (SceneComp->HasAnyFlags(RF_ArchetypeObject))
 			{
-				FNotifyHook* NotifyHook = DetailBuilder.GetPropertyUtilities()->GetNotifyHook();
-				UBlueprint* Blueprint = static_cast<FBlueprintEditor*>(NotifyHook)->GetBlueprintObj();
-				if (Blueprint->GeneratedClass->IsChildOf(AMyActor::StaticClass()))
+				UBlueprintGeneratedClass* OuterGeneratedClass = Cast<UBlueprintGeneratedClass>(SceneComp->GetOuter());
+				if (OuterGeneratedClass && OuterGeneratedClass->IsChildOf(AMyActor::StaticClass()))
 				{
-					const TArray<USCS_Node*>& RootNodes = Blueprint->SimpleConstructionScript->GetRootNodes();
-					for (USCS_Node* Node : RootNodes)
+					if (SceneComp->HasAnyFlags(RF_InheritableComponentTemplate))
 					{
-						USceneComponent* RootComp = Cast<USceneComponent>(Node->ComponentTemplate.Get());
-						if (RootComp == Object)
+						UInheritableComponentHandler* InheritableComponentHandler = OuterGeneratedClass->GetInheritableComponentHandler(false);
+						FComponentKey ComponentKey = InheritableComponentHandler->FindKey(SceneComp);
+						if (ComponentKey.IsValid())
 						{
-							NeedHide = true;
-							break;
+							if (USCS_Node* Node = ComponentKey.FindSCSNode())
+							{
+								if (Node->IsRootNode() && Node->ParentComponentOrVariableName == NAME_None)
+								{
+									NeedHide = true;
+								}
+							}
+						}
+					}
+					else
+					{
+						const TArray<USCS_Node*>& RootNodes = OuterGeneratedClass->SimpleConstructionScript->GetRootNodes();
+						for (USCS_Node* Node : RootNodes)
+						{
+							// here this is a must, because RF_InheritableComponentTemplate can be on non-inherited component on child, which can be a "fake" root
+							if (Node->ParentComponentOrVariableName == NAME_None)
+							{
+								USceneComponent* RootComp = Cast<USceneComponent>(Node->ComponentTemplate.Get());
+								if (RootComp == SceneComp)
+								{
+									NeedHide = true;
+									break;
+								}
+							}
 						}
 					}
 				}

@@ -14,7 +14,7 @@ struct FENIXSTOCHASTICUTILS_API FMyStruct
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName Label = TEXT("DefaultName");
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(ClampMin=0.0, ClamepMax=1.0))
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	double Value = 0.0;
 };
 
@@ -27,8 +27,26 @@ public:
 	// Sets default values for this actor's properties
 	AMyActor();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FMyStruct MyStructData;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Custom")
+	bool CanEditMyData = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Custom", meta = (DisplayName="MyData1", EditCondition="CanEditMyData"))
+	FMyStruct MyStructData1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Custom", meta = (DisplayName="MyData2", EditCondition="CanEditMyData", EditConditionHides))
+	FMyStruct MyStructData2;
+
+	UPROPERTY(EditAnywhere)
+	double MyTestValue = 0.1234567;
+
+	UPROPERTY(EditAnywhere, Category = "My Int")
+	int32 MyTestInt = 0;
+
+	UPROPERTY(EditInstanceOnly, Category = "My Int")
+	int32 MyTestIntNewValue = 0;
+
+	UFUNCTION(CallInEditor, Category = "My Int")
+	void ModifyMyTestInt();
 
 protected:
 	// Called when the game starts or when spawned

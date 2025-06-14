@@ -49,7 +49,6 @@ void FTestGenericDetailCustomization::CustomizeDetails(IDetailLayoutBuilder& Det
 					];
 			}
 		}
-
 	}
 }
 

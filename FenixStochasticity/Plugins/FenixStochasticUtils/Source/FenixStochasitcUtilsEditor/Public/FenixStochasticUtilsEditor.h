@@ -15,4 +15,7 @@ public:
 	virtual void ShutdownModule() override;
 
 	void HandleRegisterBlueprintEditorTab(FWorkflowAllowedTabSet& AllowedTabSet, FName ModeName, TSharedPtr<FBlueprintEditor> InEditor);
+
+private:
+	FDelegateHandle OnRegisterTabHandle;
 };

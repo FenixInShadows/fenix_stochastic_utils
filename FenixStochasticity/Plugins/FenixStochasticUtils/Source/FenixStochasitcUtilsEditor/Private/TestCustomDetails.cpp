@@ -10,10 +10,13 @@
 
 void FTestCustomDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
-	NotifyHook = DetailBuilder.GetPropertyUtilities()->GetNotifyHook();
+	TArray<TWeakObjectPtr<UObject>> SelectedObjects;
 	DetailBuilder.GetObjectsBeingCustomized(SelectedObjects);
 
 	DetailBuilder.HideCategory("TransformCommon");
+
+
+	TArray<UObject*> RootComponents;
 
 	double MaxScale = 0.0;
 	for (TWeakObjectPtr Object : SelectedObjects)
@@ -26,6 +29,7 @@ void FTestCustomDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 				USceneComponent* RootComp = GetRootComponentTemplate(ActorGeneratedClass);
 				if (RootComp)
 				{
+					RootComponents.Add(RootComp);
 					FVector Scale = RootComp->GetRelativeScale3D();
 					for (int i = 0; i < 3; i++)
 					{
@@ -39,13 +43,18 @@ void FTestCustomDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 			}
 			else
 			{
-				FVector Scale = Actor->GetActorRelativeScale3D();
-				for (int i = 0; i < 3; i++)
+				USceneComponent* RootComp = Actor->GetRootComponent();
+				if (RootComp)  // when the actor's blueprint is compling and the instance in the map is being selected at the same time, this can be null
 				{
-					double SubScale = Scale[i];
-					if (SubScale > MaxScale)
+					RootComponents.Add(RootComp);
+					FVector Scale = Actor->GetActorRelativeScale3D();
+					for (int i = 0; i < 3; i++)
 					{
-						MaxScale = SubScale;
+						double SubScale = Scale[i];
+						if (SubScale > MaxScale)
+						{
+							MaxScale = SubScale;
+						}
 					}
 				}
 			}
@@ -63,53 +72,21 @@ void FTestCustomDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 				.Value(MaxScale)
 				.OnValueChanged(this, &FTestCustomDetails::OnValueChanged)
 		];
+
+	if (!RootComponents.IsEmpty())
+	{
+		RootScalePropHandle = DetailBuilder.AddObjectPropertyData(RootComponents, USceneComponent::GetRelativeScale3DPropertyName());
+
+		TSharedPtr<IPropertyHandle> VisiblePropHandle = DetailBuilder.AddObjectPropertyData(RootComponents, USceneComponent::GetVisiblePropertyName());
+		VisiblePropHandle->SetPropertyDisplayName(FText::FromString("Root Visibility"));
+		DetailBuilder.AddPropertyToCategory(VisiblePropHandle);
+	}
 }
 
 void FTestCustomDetails::OnValueChanged(const float NewValue) const
 {
-	for (TWeakObjectPtr Object : SelectedObjects)
-	{
-		if (AActor* Actor = Cast<AActor>(Object.Get()))
-		{
-			if (Actor->HasAnyFlags(RF_ClassDefaultObject))  // CDO's root component is not created atm, need to get from templates in blueprint 
-			{
-				UBlueprintGeneratedClass* ActorGeneratedClass = Cast<UBlueprintGeneratedClass>(Actor->GetClass());
-				USceneComponent* RootComp = GetRootComponentTemplate(ActorGeneratedClass);
-				if (RootComp)
-				{
-					FProperty* ChangedProperty = RootComp->GetClass()->FindPropertyByName(RootComp->GetRelativeRotationPropertyName());
-					NotifyHook->NotifyPreChange(ChangedProperty);
-
-					FVector PreviousScale = RootComp->GetRelativeScale3D();
-					FVector NewScale = FVector(NewValue, NewValue, NewValue);
-					RootComp->SetRelativeScale3D(NewScale);
-
-					TArray<UObject*> ArchetypeInstances;
-					RootComp->GetArchetypeInstances(ArchetypeInstances);
-					for (UObject* ArchetypeObj : ArchetypeInstances)
-					{
-						if (USceneComponent* ArchetypeSceneComp = Cast<USceneComponent>(ArchetypeObj))
-						{
-							if (ArchetypeSceneComp->GetRelativeScale3D() == PreviousScale)
-							{
-								ArchetypeSceneComp->SetRelativeScale3D(NewScale);
-							}
-						}
-					}
-
-					TArrayView<const UObject* const> ChangedObjects{ RootComp };
-					FPropertyChangedEvent PropertyChangedEvent(ChangedProperty, EPropertyChangeType::ValueSet, ChangedObjects);
-					NotifyHook->NotifyPostChange(PropertyChangedEvent, ChangedProperty);
-				}
-			}
-			else
-			{
-				Actor->SetActorRelativeScale3D(FVector(NewValue, NewValue, NewValue));
-				Actor->MarkPackageDirty();
-			}
-			GEditor->RedrawAllViewports();
-		}
-	}
+	FString FormattedString = FString::Printf(TEXT("(X=%.3f,Y=%.3f,Z=%.3f)"), NewValue, NewValue, NewValue);
+	RootScalePropHandle->SetValueFromFormattedString(FormattedString);
 }
 
 USceneComponent* FTestCustomDetails::GetRootComponentTemplate(UBlueprintGeneratedClass* ActorGeneratedClass) const

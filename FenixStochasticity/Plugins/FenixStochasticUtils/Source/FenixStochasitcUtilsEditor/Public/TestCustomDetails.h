@@ -13,6 +13,5 @@ protected:
 	void OnValueChanged(float NewValue) const;
 	USceneComponent* GetRootComponentTemplate(UBlueprintGeneratedClass* ActorGeneratedClass) const;
 
-	TArray<TWeakObjectPtr<UObject>> SelectedObjects;
-	FNotifyHook* NotifyHook;
+	TSharedPtr<IPropertyHandle> RootScalePropHandle;
 };

@@ -48,6 +48,9 @@ public:
 	UFUNCTION(CallInEditor, Category = "My Int")
 	void ModifyMyTestInt();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString NickName = "Unknown";
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

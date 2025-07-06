@@ -26,7 +26,7 @@ public class FenixStochasticUtilsEditor : ModuleRules
 			new string[]
 			{
 				"Core",
-				"FenixStochasticUtils",
+                "FenixStochasticUtils",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -43,7 +43,9 @@ public class FenixStochasticUtilsEditor : ModuleRules
 				"KismetCompiler",
 				"BlueprintGraph",
 				"UnrealEd",
-				"FenixStochasticUtils",
+				"UMG",
+                "Blutility",
+                "FenixStochasticUtils",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

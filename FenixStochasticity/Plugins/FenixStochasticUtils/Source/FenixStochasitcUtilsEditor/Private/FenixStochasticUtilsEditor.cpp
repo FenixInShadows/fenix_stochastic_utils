@@ -3,6 +3,7 @@
 #include "FenixStochasticUtilsEditor.h"
 #include "TestCustomDetails.h"
 #include "TestCustomDetailsForSceneComponent.h"
+#include "TestCustomDetailsForEditorUtilityWidget.h"
 #include "TestGenericDetailCustomization.h"
 #include "TestCustomPropertyType.h"
 #include "MyActor.h"
@@ -14,6 +15,9 @@ void FFenixStochasticUtilsEditorModule::StartupModule()
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyModule.RegisterCustomClassLayout(AMyActor::StaticClass()->GetFName(), FOnGetDetailCustomizationInstance::CreateStatic(&FTestCustomDetails::MakeInstance));
     PropertyModule.RegisterCustomClassLayout(USceneComponent::StaticClass()->GetFName(), FOnGetDetailCustomizationInstance::CreateStatic(&FTestCustomDetailsForSceneComponent::MakeInstance));
+    
+    PropertyModule.RegisterCustomClassLayout("TestEditorUtilityWidget_C", FOnGetDetailCustomizationInstance::CreateStatic(&FTestCustomDetailsForEditorUtilityWidget::MakeInstance));
+    
     PropertyModule.RegisterCustomPropertyTypeLayout(FMyStruct::StaticStruct()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FTestCustomPropertyType::MakeInstance));
 
     FBlueprintEditorModule& BlueprintEditorModule = FModuleManager::LoadModuleChecked<FBlueprintEditorModule>("Kismet");

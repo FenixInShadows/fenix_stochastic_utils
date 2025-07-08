@@ -7,6 +7,8 @@
 #include "TestGenericDetailCustomization.h"
 #include "TestCustomPropertyType.h"
 #include "MyActor.h"
+#include "ToolMenus.h"
+#include "MyEditorFunctionLibrary.h"
 
 #define LOCTEXT_NAMESPACE "FFenixStochasticUtilsEditorModule"
 
@@ -22,6 +24,10 @@ void FFenixStochasticUtilsEditorModule::StartupModule()
 
     FBlueprintEditorModule& BlueprintEditorModule = FModuleManager::LoadModuleChecked<FBlueprintEditorModule>("Kismet");
     OnRegisterTabHandle = BlueprintEditorModule.OnRegisterTabsForEditor().AddRaw(this, &FFenixStochasticUtilsEditorModule::HandleRegisterBlueprintEditorTab);
+
+    // Toolbars & Menus
+    UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(
+        this, &FFenixStochasticUtilsEditorModule::RegisterMenuExtensions));
 }
 
 void FFenixStochasticUtilsEditorModule::ShutdownModule()
@@ -33,6 +39,10 @@ void FFenixStochasticUtilsEditorModule::ShutdownModule()
 
     FBlueprintEditorModule& BlueprintEditorModule = FModuleManager::LoadModuleChecked<FBlueprintEditorModule>("Kismet");
     BlueprintEditorModule.OnRegisterTabsForEditor().Remove(OnRegisterTabHandle);
+
+    // Toolbars & Menus
+    UToolMenus::UnRegisterStartupCallback(this);  // here "this" corresponds to the one used in CreateRaw in RegisterStartupCallback
+    UToolMenus::UnregisterOwner(this);  // here "this" corresponds to the one used to create OwnerScoped
 }
 
 void FFenixStochasticUtilsEditorModule::HandleRegisterBlueprintEditorTab(FWorkflowAllowedTabSet& AllowedTabSet, FName ModeName, TSharedPtr<FBlueprintEditor> InEditor)
@@ -44,6 +54,53 @@ void FFenixStochasticUtilsEditorModule::HandleRegisterBlueprintEditorTab(FWorkfl
     {
         DetailsView->SetGenericLayoutDetailsDelegate(FOnGetDetailCustomizationInstance::CreateStatic(&FTestGenericDetailCustomization::MakeInstance));
     }
+}
+
+void FFenixStochasticUtilsEditorModule::RegisterMenuExtensions()
+{
+    // Use "this" as the owner of custom items added here (it'll be active for all changes made when this FToolMenuOwnerScoped is the most recent one created and active).
+    // This allows the unregistration in ShutdownModule to use "this" to unregister and only unregister with it as the owner (cooresponds to parameters used in UnregisterOwner).
+    FToolMenuOwnerScoped OwnerScoped(this);
+
+    // Toolbar extension example
+    UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.LevelEditorToolBar.ModesToolBar");
+    FToolMenuSection& ToolbarSection = ToolbarMenu->FindOrAddSection("File");
+    ToolbarSection.AddEntry(FToolMenuEntry::InitToolBarButton(
+        "MyCustomButton",
+        FExecuteAction::CreateLambda([]()
+            {
+                UMyEditorFunctionLibrary::NotifySuccess(
+                    FText::FromString("MyCustomButton Clicked"),
+                    "https://space.bilibili.com/298437",
+                    FText::FromString("Open this for something cooooool!")
+                );
+            }),
+        INVTEXT("My custom button"),
+        INVTEXT("Tooltip for my custom button"),
+        FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Comment")
+    ));
+
+    // Menu extension example
+    UToolMenu* SelectionMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.Select");
+    FToolMenuSection& SelectionSection = SelectionMenu->AddSection(
+        "MyCustomSelection",
+        INVTEXT("My Custom Section"),
+        FToolMenuInsert("SelectBSP", EToolMenuInsertType::After)
+    );
+    SelectionSection.AddEntry(FToolMenuEntry::InitMenuEntry(
+        "MyCustomEntry",
+        INVTEXT("My custom entry"),
+        INVTEXT("Tooltip for my custom entry"),
+        FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Comment"),
+        FExecuteAction::CreateLambda([]()
+            {
+                UMyEditorFunctionLibrary::NotifySuccess(
+                    FText::FromString("MyCustomEntry Clicked"),
+                    "https://space.bilibili.com/298437",
+                    FText::FromString("Open this for something cooooool!")
+                );
+            })
+    ));
 }
 
 #undef LOCTEXT_NAMESPACE

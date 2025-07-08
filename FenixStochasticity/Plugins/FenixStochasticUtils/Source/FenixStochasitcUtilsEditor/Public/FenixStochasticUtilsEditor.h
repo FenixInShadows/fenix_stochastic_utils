@@ -16,6 +16,8 @@ public:
 
 	void HandleRegisterBlueprintEditorTab(FWorkflowAllowedTabSet& AllowedTabSet, FName ModeName, TSharedPtr<FBlueprintEditor> InEditor);
 
+	void RegisterMenuExtensions();
+
 private:
 	FDelegateHandle OnRegisterTabHandle;
 };

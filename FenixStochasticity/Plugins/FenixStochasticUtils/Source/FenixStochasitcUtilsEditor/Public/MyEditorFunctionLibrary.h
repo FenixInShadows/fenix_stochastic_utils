@@ -14,6 +14,10 @@ class FENIXSTOCHASTICUTILSEDITOR_API UMyEditorFunctionLibrary : public UBlueprin
 {
 	GENERATED_BODY()
 
+public:
 	UFUNCTION(BlueprintCallable)
 	static void MarkPackageDirty(UObject* Object);
+
+	UFUNCTION(BlueprintCallable, meta = (Category = "SlateNotifications"))
+	static void NotifySuccess(const FText& NotificationText, const FString& HyperlinkURL, const FText& HyperlinkText);
 };

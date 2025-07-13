@@ -69,8 +69,19 @@ void FFenixStochasticUtilsEditorModule::RegisterMenuExtensions()
         "MyCustomButton",
         FExecuteAction::CreateLambda([]()
             {
+                EAppReturnType::Type Answer = FMessageDialog::Open(EAppMsgType::YesNo, FText::FromString("MyCustomButtonClicked"));
+                FText SlateNotifyMsg = FText::FromString("Nothing Selected");
+                switch (Answer)
+                {
+                case EAppReturnType::No:
+                    SlateNotifyMsg = FText::FromString("No Selected");
+                    break;
+                case EAppReturnType::Yes:
+                    SlateNotifyMsg = FText::FromString("Yes Selected");
+                    break;
+                }
                 UMyEditorFunctionLibrary::NotifySuccess(
-                    FText::FromString("MyCustomButton Clicked"),
+                    SlateNotifyMsg,
                     "https://space.bilibili.com/298437",
                     FText::FromString("Open this for something cooooool!")
                 );

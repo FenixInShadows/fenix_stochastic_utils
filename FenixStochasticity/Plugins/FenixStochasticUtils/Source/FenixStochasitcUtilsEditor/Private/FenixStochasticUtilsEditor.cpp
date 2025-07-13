@@ -9,6 +9,7 @@
 #include "MyActor.h"
 #include "ToolMenus.h"
 #include "MyEditorFunctionLibrary.h"
+#include "Misc/ScopedSlowTask.h"
 
 #define LOCTEXT_NAMESPACE "FFenixStochasticUtilsEditorModule"
 
@@ -105,8 +106,29 @@ void FFenixStochasticUtilsEditorModule::RegisterMenuExtensions()
         FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Comment"),
         FExecuteAction::CreateLambda([]()
             {
+                const int32 NumTestInterations = 10000000;
+                int32 NumZeros = 0;
+                FScopedSlowTask MyCustomSlowTask(float(NumTestInterations), FText::FromString("MyCustomEntry Task Running..."));
+                MyCustomSlowTask.MakeDialog();
+                for (int32 Index = 0; Index < NumTestInterations; Index++)
+                {
+                    MyCustomSlowTask.EnterProgressFrame(100.0f,
+                        FText::Format(FText::FromString("Progress: {0}/{1}"), Index, NumTestInterations));
+                    int32 RandomBit = FMath::RandRange(0, 1);
+                    if (RandomBit == 0)
+                    {
+                        NumZeros++;
+                    }   
+                }
+                MyCustomSlowTask.EnterProgressFrame(0.0f,
+                    FText::Format(FText::FromString("Progress: {0}/{1}"), NumTestInterations, NumTestInterations));
+
                 UMyEditorFunctionLibrary::NotifySuccess(
-                    FText::FromString("MyCustomEntry Clicked"),
+                    FText::Format(
+                        FText::FromString("MyCustomEntry Task Completed.\n Number of Zeros: {0}/{1}"),
+                        NumZeros,
+                        NumTestInterations
+                    ),
                     "https://space.bilibili.com/298437",
                     FText::FromString("Open this for something cooooool!")
                 );

@@ -112,7 +112,7 @@ void FFenixStochasticUtilsEditorModule::RegisterMenuExtensions()
                 MyCustomSlowTask.MakeDialog();
                 for (int32 Index = 0; Index < NumTestInterations; Index++)
                 {
-                    MyCustomSlowTask.EnterProgressFrame(100.0f,
+                    MyCustomSlowTask.EnterProgressFrame(1.0f,
                         FText::Format(FText::FromString("Progress: {0}/{1}"), Index, NumTestInterations));
                     int32 RandomBit = FMath::RandRange(0, 1);
                     if (RandomBit == 0)

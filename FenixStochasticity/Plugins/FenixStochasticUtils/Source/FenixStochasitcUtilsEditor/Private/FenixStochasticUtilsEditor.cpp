@@ -27,8 +27,9 @@ void FFenixStochasticUtilsEditorModule::StartupModule()
     OnRegisterTabHandle = BlueprintEditorModule.OnRegisterTabsForEditor().AddRaw(this, &FFenixStochasticUtilsEditorModule::HandleRegisterBlueprintEditorTab);
 
     // Toolbars & Menus
-    UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(
-        this, &FFenixStochasticUtilsEditorModule::RegisterMenuExtensions));
+    RegisterMenuExtensions();
+    // UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(
+    //    this, &FFenixStochasticUtilsEditorModule::RegisterMenuExtensions));
 }
 
 void FFenixStochasticUtilsEditorModule::ShutdownModule()
@@ -42,7 +43,7 @@ void FFenixStochasticUtilsEditorModule::ShutdownModule()
     BlueprintEditorModule.OnRegisterTabsForEditor().Remove(OnRegisterTabHandle);
 
     // Toolbars & Menus
-    UToolMenus::UnRegisterStartupCallback(this);  // here "this" corresponds to the one used in CreateRaw in RegisterStartupCallback
+    // UToolMenus::UnRegisterStartupCallback(this);  // here "this" corresponds to the one used in CreateRaw in RegisterStartupCallback
     UToolMenus::UnregisterOwner(this);  // here "this" corresponds to the one used to create OwnerScoped
 }
 

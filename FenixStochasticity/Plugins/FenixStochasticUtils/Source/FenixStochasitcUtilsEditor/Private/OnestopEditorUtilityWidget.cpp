@@ -55,28 +55,24 @@ bool UOnestopEditorUtilityWidget::Initialize()
 UEditorUtilityWidget* UOnestopEditorUtilityWidget::CreateChildWidget(TSubclassOf<UEditorUtilityWidget> WidgetClass)
 {
 	// Copied and adapted from parts of UEditorUtilityWidgetBlueprint::CreateUtilityWidget
-	UEditorUtilityWidget* CreatedUMGWidget = nullptr;
-	if (UWorld* World = GEditor->GetEditorWorldContext().World())
+	 UEditorUtilityWidget* CreatedUMGWidget = CreateWidget<UEditorUtilityWidget>(this, WidgetClass);
+	if (CreatedUMGWidget)
 	{
-		CreatedUMGWidget = CreateWidget<UEditorUtilityWidget>(World, WidgetClass);
-		if (CreatedUMGWidget)
+		// Editor Utility is flagged as transient to prevent from dirty the World it's created in when a property added to the Utility Widget is changed
+		CreatedUMGWidget->SetFlags(RF_Transient);
+
+		// Also mark nested utility widgets as transient to prevent them from dirtying the world (since they'll be created via CreateWidget and not CreateUtilityWidget)
+		TArray<UWidget*> AllWidgets;
+		CreatedUMGWidget->WidgetTree->GetAllWidgets(AllWidgets);
+
+		for (UWidget* Widget : AllWidgets)
 		{
-			// Editor Utility is flagged as transient to prevent from dirty the World it's created in when a property added to the Utility Widget is changed
-			CreatedUMGWidget->SetFlags(RF_Transient);
-
-			// Also mark nested utility widgets as transient to prevent them from dirtying the world (since they'll be created via CreateWidget and not CreateUtilityWidget)
-			TArray<UWidget*> AllWidgets;
-			CreatedUMGWidget->WidgetTree->GetAllWidgets(AllWidgets);
-
-			for (UWidget* Widget : AllWidgets)
+			if (Widget->IsA(UEditorUtilityWidget::StaticClass()))
 			{
-				if (Widget->IsA(UEditorUtilityWidget::StaticClass()))
+				Widget->SetFlags(RF_Transient);
+				if (UPanelSlot* PanelSlot = Widget->Slot)  // cannot use "Slot" as there is a member called "Slot" here as well
 				{
-					Widget->SetFlags(RF_Transient);
-					if (UPanelSlot* PanelSlot = Widget->Slot)  // cannot use "Slot" as there is a member called "Slot" here as well
-					{
-						PanelSlot->SetFlags(RF_Transient);
-					}
+					PanelSlot->SetFlags(RF_Transient);
 				}
 			}
 		}
@@ -92,6 +88,7 @@ void UOnestopEditorUtilityWidget::ProcessCustomActionEntriesConfigs(TArray<FStri
 		UOnestopActionEntry* ActionEntry = Cast<UOnestopActionEntry>(CreateChildWidget(ActionEntryClass));
 		ActionEntry->SetDisplayText(FText::FromString(Config.ActionName));
 		ActionEntry->OnSelected.BindUObject(this, Config.Func);
+		AllCustomActionEntries.Add(ActionEntry);
 		if (CategoryActionsMap.Contains(CategoryLabel))
 		{
 			CategoryActionsMap[CategoryLabel].Add(ActionEntry);

@@ -4,6 +4,11 @@
 #include "MyEditorFunctionLibrary.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Widgets/Notifications/SNotificationList.h"
+#include "HAL/PlatformFileManager.h"
+#include "AssetToolsModule.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "UObject/SavePackage.h"
+#include "Subsystems/EditorAssetSubsystem.h"
 
 void UMyEditorFunctionLibrary::MarkPackageDirty(UObject* Object)
 {
@@ -27,4 +32,70 @@ void UMyEditorFunctionLibrary::NotifySuccess(const FText& NotificationText, cons
 	}
 
 	FSlateNotificationManager::Get().AddNotification(Info);
+}
+
+bool UMyEditorFunctionLibrary::IsDirectoryExist(const FString DirSoftPath)
+{
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	return AssetRegistryModule.Get().PathExists(DirSoftPath);
+}
+
+void UMyEditorFunctionLibrary::CreateDirectory(const FString& DirSoftPath, bool bRefreshRegistry)
+{
+	FString AbsolutePath;
+	if (!FPackageName::TryConvertLongPackageNameToFilename(DirSoftPath, AbsolutePath)) {
+		UE_LOG(LogTemp, Error, TEXT("Invalid virtual path: %s"), *DirSoftPath);
+		return;
+	}
+
+	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+	PlatformFile.CreateDirectoryTree(*AbsolutePath);
+
+	if (bRefreshRegistry)
+	{
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+		AssetRegistryModule.Get().ScanPathsSynchronous({ DirSoftPath }, true);
+	}
+}
+
+bool UMyEditorFunctionLibrary::IsAssetExist(const FString& AssetName, const FString& DirSoftPath)
+{
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	const FString AssetPath = DirSoftPath / FString::Format(TEXT("{0}.{0}"), { AssetName });
+	FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FName(*AssetPath));
+	return AssetData.IsValid();
+}
+
+UObject* UMyEditorFunctionLibrary::CreateAsset(const FString& AssetName, const FString& DirSoftPath, UClass* AssetClass, UFactory* Factory, bool bSaveAsset)
+{
+	UObject* NewAsset = FAssetToolsModule::GetModule().Get().CreateAsset(AssetName, DirSoftPath, AssetClass, Factory);
+	
+	if (bSaveAsset)
+	{
+		SaveAsset(NewAsset);
+	}
+	
+	return NewAsset;
+}
+
+UObject* UMyEditorFunctionLibrary::LoadAsset(const FString& AssetName, const FString& DirSoftPath)
+{
+	const FString AssetPath = DirSoftPath / FString::Format(TEXT("{0}.{0}"), { AssetName });
+	return GEditor->GetEditorSubsystem<UEditorAssetSubsystem>()->LoadAsset(AssetPath);
+}
+
+void UMyEditorFunctionLibrary::SaveAsset(UObject* Asset)
+{
+	if (Asset)
+	{
+		UPackage* Package = Asset->GetPackage();
+		FString PackageFileName = FPackageName::LongPackageNameToFilename(
+			Package->GetName(),
+			FPackageName::GetAssetPackageExtension()
+		);
+
+		FSavePackageArgs SaveArgs;
+		SaveArgs.TopLevelFlags = RF_Public | RF_Standalone;
+		UPackage::SavePackage(Package, nullptr, *PackageFileName, SaveArgs);
+	}
 }

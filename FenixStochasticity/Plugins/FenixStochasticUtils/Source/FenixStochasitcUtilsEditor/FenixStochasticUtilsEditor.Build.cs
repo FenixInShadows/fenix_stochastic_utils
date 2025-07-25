@@ -44,6 +44,7 @@ public class FenixStochasticUtilsEditor : ModuleRules
 				"BlueprintGraph",
 				"UnrealEd",
                 "UMG",
+                "UMGEditor",
                 "Blutility",
                 "LevelEditor",
                 "FenixStochasticUtils",

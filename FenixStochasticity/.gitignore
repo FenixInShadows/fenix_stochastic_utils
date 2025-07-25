@@ -78,3 +78,6 @@ Packaged/*
 
 # This is a plugin project, so stuff under Content directory are purely for temporary testing
 Content/*
+
+# OnestopTool demo related
+Plugins/**/Temp/*

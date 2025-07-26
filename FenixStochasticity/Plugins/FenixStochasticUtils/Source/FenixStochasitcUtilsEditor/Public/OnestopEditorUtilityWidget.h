@@ -9,12 +9,19 @@
 #include "OnestopActionEntry.h"
 #include "OnestopActionRow.h"
 #include "OnestopPrefDataAsset.h"
+#include "OnestopCacheDataAsset.h"
 
 #include "OnestopEditorUtilityWidget.generated.h"
 
 struct FENIXSTOCHASTICUTILSEDITOR_API OnestopActionEntryConfig
 {
 	FString CategoryName;
+	FString ActionName;
+	void (UOnestopEditorUtilityWidget::* Func)();
+};
+
+struct FENIXSTOCHASTICUTILSEDITOR_API OnestopSpecificCategoryActionEntryConfig
+{
 	FString ActionName;
 	void (UOnestopEditorUtilityWidget::* Func)();
 };
@@ -28,9 +35,9 @@ class FENIXSTOCHASTICUTILSEDITOR_API UOnestopEditorUtilityWidget : public UEdito
 	GENERATED_BODY()
 
 private:
-	#pragma region Action Entry Functions
-	void PlaceholderActionHeler(FString Msg);
-	
+	void NotifyHelper(const FString& Msg);
+
+	#pragma region Action Specific Functions for Custom Categories	
 	void OpenToolPanelA();
 	void OpenTool1();
 	void OpenTool2();
@@ -56,6 +63,11 @@ private:
 	void OpenMyActor();
 
 	void CheckAssetNames();
+	#pragma endregion
+
+	#pragma region Action Specific Functions for ThisPanel Category
+	void ClearBookmarks();
+	void ClearCommonlyUsedActions();
 	#pragma endregion
 
 public:	
@@ -91,34 +103,69 @@ private:
 	// Entries in here generally do not support Bookmark or CommonlyUsed feature, but support searching.
 	UOnestopCategoryEntry* ThisPanelCategoryEntry;
 
-	TMap<FString, TArray<UOnestopActionEntry*>> CategoryActionsMap;
-
+	TMap<FString, UOnestopCategoryEntry*> CategoryNameEntryMap;
 	TMap<FString, UOnestopActionEntry*> ActionNameEntryMap;
 
-	UPROPERTY(Transient)  // use UPROPERTY to prevent entry being GC'ed when switching panels etc.
+	TMap<FString, TArray<UOnestopActionEntry*>> CustomCategoryActionsMap;	
+
+	UPROPERTY(Transient)  // use UPROPERTY to prevent entry being GC'ed when switching panels etc. similar below
+	TArray<UEditorUtilityWidget*> EmptyActionEntries;  // For filling incomplete rows.
+
+	UPROPERTY(Transient)
 	TArray<UOnestopActionEntry*> AllCustomActionEntries;
 
 	UPROPERTY(Transient)
-	TArray<UEditorUtilityWidget*> EmptyActionEntries;  // For filling incomplete rows.
+	TArray<UOnestopActionEntry*> ThisPanelActionEntries;
 
 public:
 	virtual bool Initialize() override;
 
+	UFUNCTION(BlueprintImplementableEvent)  // SearchTextBox UI only
+	void ResetSearchState();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	FString GetSearchKeyText();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void SetSearchKeyText(const FString& KeyText);
+
+	UFUNCTION(BlueprintCallable)
+	void OnSearchKeyTextUpdated();
+
 private:
 	UEditorUtilityWidget* CreateSubWidget(TSubclassOf<UEditorUtilityWidget> WidgetClass);
 
+	void InitLocalAsset();
+	void InitCategoryEntry(UOnestopCategoryEntry* Entry, const FString& Label, bool bIsSpecial = false);
+	void CreateScrollBoxCategoryEntry(UOnestopCategoryEntry*& Entry, const FString& Label, bool bIsSpecial = false);
+	void PrecreateEmptyActionEntries();
 	void ProcessCustomActionEntriesConfigs(TArray<FString>& OutCustomCategoryLabels);
 	void CreateCustomCategories(const TArray<FString>& CustomCategoryLabels);
+	void ProcessThisPanelActionEntriesConfigs();
 
 	void SelectCategory(UOnestopCategoryEntry* Entry);
 	void SelectCategoryEntry(UOnestopCategoryEntry* Entry);
 	void ClearSelectedCategoryEntry();
-	void RefreshActionEntriesForCategory(const UOnestopCategoryEntry* Entry);
+	void RefreshActionEntriesForCategory(const UOnestopCategoryEntry* CategoryEntry);
+	void FillSearchCategoryActionEntries();
+	void FillBookmarkCategoryActionEntries();
+	void FillCommonlyUsedCategoryActionEntries();
+	void FillThisPanelCategoryActionEntries();
+	void FillCustomCategoryActionEntries(const UOnestopCategoryEntry* CategoryEntry);
 	void FillActionScrollBox(const TArray<UOnestopActionEntry*>& ActionEntries);
 
-	static const FString PrefFolderPath;
+	void PostCustomActionSelected(UOnestopActionEntry* Entry);
+	void PostIsBookmarkedUpdate(UOnestopActionEntry* Entry, const bool bBookmarked);
+
+	UOnestopCategoryEntry* SelectedCategoryEntry = nullptr;
+
+	static const double WeightDecayFactor;
+	static const FString LocalFolderPath;
 	static const FString PrefAssetName;
+	static const FString CacheAssetName;
 	static UOnestopPrefDataAsset* PrefAsset;
+	static UOnestopCacheDataAsset* CacheAsset;
 
 	static const TArray<OnestopActionEntryConfig> CustomActionEntryConfigs;
+	static const TArray<OnestopSpecificCategoryActionEntryConfig> ThisPanelActionEntryConfigs;
 };

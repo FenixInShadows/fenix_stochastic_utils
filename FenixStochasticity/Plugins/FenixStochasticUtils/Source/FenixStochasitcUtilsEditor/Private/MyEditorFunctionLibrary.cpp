@@ -34,13 +34,7 @@ void UMyEditorFunctionLibrary::NotifySuccess(const FText& NotificationText, cons
 	FSlateNotificationManager::Get().AddNotification(Info);
 }
 
-bool UMyEditorFunctionLibrary::IsDirectoryExist(const FString DirSoftPath)
-{
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-	return AssetRegistryModule.Get().PathExists(DirSoftPath);
-}
-
-void UMyEditorFunctionLibrary::CreateDirectory(const FString& DirSoftPath, bool bRefreshRegistry)
+void UMyEditorFunctionLibrary::CreateDirectoryTree(const FString& DirSoftPath, bool bRefreshRegistry)
 {
 	FString AbsolutePath;
 	if (!FPackageName::TryConvertLongPackageNameToFilename(DirSoftPath, AbsolutePath)) {
@@ -56,14 +50,6 @@ void UMyEditorFunctionLibrary::CreateDirectory(const FString& DirSoftPath, bool 
 		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 		AssetRegistryModule.Get().ScanPathsSynchronous({ DirSoftPath }, true);
 	}
-}
-
-bool UMyEditorFunctionLibrary::IsAssetExist(const FString& AssetName, const FString& DirSoftPath)
-{
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-	const FString AssetPath = DirSoftPath / FString::Format(TEXT("{0}.{0}"), { AssetName });
-	FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(FName(*AssetPath));
-	return AssetData.IsValid();
 }
 
 UObject* UMyEditorFunctionLibrary::CreateAsset(const FString& AssetName, const FString& DirSoftPath, UClass* AssetClass, UFactory* Factory, bool bSaveAsset)

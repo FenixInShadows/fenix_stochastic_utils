@@ -6,7 +6,7 @@
 #include "EditorUtilityWidget.h"
 #include "OnestopCategoryEntry.generated.h"
 
-DECLARE_DELEGATE_OneParam(FCategorySelectedDelegate, UOnestopCategoryEntry*);
+DECLARE_DELEGATE_OneParam(FOnestopCategorySelectedDelegate, UOnestopCategoryEntry*);
 
 /**
  * 
@@ -21,12 +21,15 @@ public:
 	void SetDisplayText(const FText& Description);
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void MarkSelectionState(bool bSelected);
+	void SetIsSpecialCategory(const bool bIsSpecial = false);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void MarkSelectionState(const bool bSelected);
 
 	UFUNCTION(BlueprintCallable)
 	void SelectCategory();
 
 	FString CategoryLabel;
 
-	FCategorySelectedDelegate OnSelected;
+	FOnestopCategorySelectedDelegate OnSelected;
 };

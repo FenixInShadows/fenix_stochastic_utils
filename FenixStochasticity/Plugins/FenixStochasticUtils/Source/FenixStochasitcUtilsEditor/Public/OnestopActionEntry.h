@@ -7,8 +7,9 @@
 #include "OnestopActionEntry.generated.h"
 
 
-DECLARE_DELEGATE(FActionSelectedDelegate);
-DECLARE_DELEGATE_OneParam(FActionBookmarkedDelegate, UOnestopActionEntry*);
+DECLARE_DELEGATE(FOnestopActionSelectedDelegate);
+DECLARE_DELEGATE_OneParam(FOnestopActionPostSelectedDelegate, UOnestopActionEntry*)
+DECLARE_DELEGATE_TwoParams(FOnestopActionPostBookmarkDelegate, UOnestopActionEntry*, const bool);
 
 /**
  * 
@@ -24,8 +25,28 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SelectAction();
-	
-	FActionSelectedDelegate OnSelected;
 
-	FActionBookmarkedDelegate OnBookmarked;
+	UFUNCTION(BlueprintImplementableEvent)  // only for UI
+	void SetBookmarkState(const bool bBookmarked);
+
+	UFUNCTION(BlueprintImplementableEvent)  // only for UI
+	void SetBookmarkableState(const bool bBookmarkable);
+
+	UFUNCTION(BlueprintCallable)
+	void SwitchIsBookmarked();
+
+	void UpdateIsBookmarked(const bool bBookmarked);
+
+	void InitIsBookmarked(const bool bBookmarked);
+	
+	void InitIsBookmarkable(const bool bBookmarkable);
+
+	FString ActionLabel;
+
+	bool bIsBookmarked = false;
+	
+	FOnestopActionSelectedDelegate OnSelected;
+	FOnestopActionPostSelectedDelegate PostSelected;
+
+	FOnestopActionPostBookmarkDelegate PostIsBookmarkedUpdate;
 };

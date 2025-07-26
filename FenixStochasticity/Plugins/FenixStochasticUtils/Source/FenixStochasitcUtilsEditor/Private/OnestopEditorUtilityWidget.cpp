@@ -11,9 +11,12 @@
 #include "EditorUtilityWidgetBlueprint.h"
 #include "Factories/DataAssetFactory.h"
 
-const FString UOnestopEditorUtilityWidget::PrefFolderPath = "/FenixStochasticUtils/Demos/Demo_OnestopEditorTool/Temp";
+const double UOnestopEditorUtilityWidget::WeightDecayFactor = 0.9375;
+const FString UOnestopEditorUtilityWidget::LocalFolderPath = "/FenixStochasticUtils/Demos/Demo_OnestopEditorTool/Local";
 const FString UOnestopEditorUtilityWidget::PrefAssetName = "OnestopToolPref";
+const FString UOnestopEditorUtilityWidget::CacheAssetName = "OnestopToolCache";
 UOnestopPrefDataAsset* UOnestopEditorUtilityWidget::PrefAsset = nullptr;
+UOnestopCacheDataAsset* UOnestopEditorUtilityWidget::CacheAsset = nullptr;
 
 const TArray<OnestopActionEntryConfig> UOnestopEditorUtilityWidget::CustomActionEntryConfigs =
 {
@@ -44,12 +47,19 @@ const TArray<OnestopActionEntryConfig> UOnestopEditorUtilityWidget::CustomAction
 	{TEXT("检查"), TEXT("命名检查"), &UOnestopEditorUtilityWidget::CheckAssetNames},
 };
 
-#pragma region Action Entry Functions
-void UOnestopEditorUtilityWidget::PlaceholderActionHeler(FString Msg)
+// Note: don't add custom entries to here; add stuff only if really needed
+const TArray<OnestopSpecificCategoryActionEntryConfig> UOnestopEditorUtilityWidget::ThisPanelActionEntryConfigs =
+{
+	{TEXT("清空书签"), &UOnestopEditorUtilityWidget::ClearBookmarks},
+	{TEXT("清空常用"), &UOnestopEditorUtilityWidget::ClearCommonlyUsedActions},
+};
+
+void UOnestopEditorUtilityWidget::NotifyHelper(const FString& Msg)
 {
 	UMyEditorFunctionLibrary::NotifySuccess(FText::FromString(Msg), "", FText());
 }
 
+#pragma region Action Specific Functions for Custom Categories
 void UOnestopEditorUtilityWidget::OpenToolPanelA()
 {
 	UEditorUtilityWidgetBlueprint* ToolPanelABlueprint = LoadObject<UEditorUtilityWidgetBlueprint>(
@@ -62,87 +72,87 @@ void UOnestopEditorUtilityWidget::OpenToolPanelA()
 
 void UOnestopEditorUtilityWidget::OpenTool1()
 {
-	PlaceholderActionHeler("Open Tool1");
+	NotifyHelper("Open Tool1");
 }
 
 void UOnestopEditorUtilityWidget::OpenTool2()
 {
-	PlaceholderActionHeler("Open Tool2");
+	NotifyHelper("Open Tool2");
 }
 
 void UOnestopEditorUtilityWidget::OpenTool3()
 {
-	PlaceholderActionHeler("Open Tool3");
+	NotifyHelper("Open Tool3");
 }
 
 void UOnestopEditorUtilityWidget::OpenTool4()
 {
-	PlaceholderActionHeler("Open Tool4");
+	NotifyHelper("Open Tool4");
 }
 
 void UOnestopEditorUtilityWidget::OpenTool5()
 {
-	PlaceholderActionHeler("Open Tool5");
+	NotifyHelper("Open Tool5");
 }
 
 void UOnestopEditorUtilityWidget::OpenTool6()
 {
-	PlaceholderActionHeler("Open Tool6");
+	NotifyHelper("Open Tool6");
 }
 
 void UOnestopEditorUtilityWidget::OpenTool7()
 {
-	PlaceholderActionHeler("Open Tool7");
+	NotifyHelper("Open Tool7");
 }
 
 void UOnestopEditorUtilityWidget::OpenTool8()
 {
-	PlaceholderActionHeler("Open Tool8");
+	NotifyHelper("Open Tool8");
 }
 
 void UOnestopEditorUtilityWidget::OpenTool9()
 {
-	PlaceholderActionHeler("Open Tool9");
+	NotifyHelper("Open Tool9");
 }
 
 void UOnestopEditorUtilityWidget::OpenTool10()
 {
-	PlaceholderActionHeler("Open Tool10");
+	NotifyHelper("Open Tool10");
 }
 
 void UOnestopEditorUtilityWidget::OpenTool11()
 {
-	PlaceholderActionHeler("Open Tool11");
+	NotifyHelper("Open Tool11");
 }
 
 void UOnestopEditorUtilityWidget::OpenTool12()
 {
-	PlaceholderActionHeler("Open Tool12");
+	NotifyHelper("Open Tool12");
 }
 
 void UOnestopEditorUtilityWidget::OpenTool13()
 {
-	PlaceholderActionHeler("Open Tool13");
+	NotifyHelper("Open Tool13");
 }
 
 void UOnestopEditorUtilityWidget::OpenTool14()
 {
-	PlaceholderActionHeler("Open Tool14");
+	NotifyHelper("Open Tool14");
 }
 
 void UOnestopEditorUtilityWidget::OpenTool15()
 {
-	PlaceholderActionHeler("Open Tool15");
+	NotifyHelper("Open Tool15");
 }
 
 void UOnestopEditorUtilityWidget::OpenTool16()
 {
-	PlaceholderActionHeler("Open Tool16");
+	NotifyHelper("Open Tool16");
 }
 
 void UOnestopEditorUtilityWidget::OpenTool17()
 {
-	PlaceholderActionHeler("Open Tool17");
+	NotifyHelper("Open Tool17");
 }
 
 void UOnestopEditorUtilityWidget::OpenLevel1()
@@ -164,7 +174,40 @@ void UOnestopEditorUtilityWidget::OpenMyActor()
 
 void UOnestopEditorUtilityWidget::CheckAssetNames()
 {
-	PlaceholderActionHeler("Asset Name Checked.");
+	NotifyHelper("Asset Name Checked.");
+}
+#pragma endregion
+
+#pragma region Action Specific Functions for ThisPanel Category
+void UOnestopEditorUtilityWidget::ClearBookmarks()
+{
+	EAppReturnType::Type Answer = FMessageDialog::Open(EAppMsgType::YesNo,
+		FText::FromString(TEXT("确定要清空书签？")));
+	if (Answer == EAppReturnType::Yes)
+	{
+		for (const FString& Label : PrefAsset->BookmarkedActions)
+		{
+			if (ActionNameEntryMap.Contains(Label))
+			{
+				ActionNameEntryMap[Label]->InitIsBookmarked(false);
+			}
+		}
+		PrefAsset->BookmarkedActions.Empty();
+		UMyEditorFunctionLibrary::SaveAsset(PrefAsset);
+		NotifyHelper(TEXT("书签已清空"));
+	}
+}
+
+void UOnestopEditorUtilityWidget::ClearCommonlyUsedActions()
+{
+	EAppReturnType::Type Answer = FMessageDialog::Open(EAppMsgType::YesNo,
+		FText::FromString(TEXT("确定要清空常用？")));
+	if (Answer == EAppReturnType::Yes)
+	{
+		PrefAsset->ActionWeights.Empty();
+		UMyEditorFunctionLibrary::SaveAsset(PrefAsset);
+		NotifyHelper(TEXT("常用已清空"));
+	}
 }
 #pragma endregion
 
@@ -175,54 +218,51 @@ bool UOnestopEditorUtilityWidget::Initialize()
 		return false;
 	}
 
-	if (UMyEditorFunctionLibrary::IsDirectoryExist(PrefFolderPath))
-	{
-		UMyEditorFunctionLibrary::CreateDirectory(PrefFolderPath);
-	}
+	InitLocalAsset();
 
-	if (UMyEditorFunctionLibrary::IsAssetExist(PrefAssetName, PrefFolderPath))
+	InitCategoryEntry(SearchCategoryEntry, TEXT("搜索"), true);
+
+	CreateScrollBoxCategoryEntry(BookmarkCategoryEntry, TEXT("书签"), true);
+
+	CreateScrollBoxCategoryEntry(CommonlyUsedCategoryEntry, TEXT("常用"), true);
+
+	PrecreateEmptyActionEntries();
+
+	TArray<FString> CustomCategoryLabels;
+	ProcessCustomActionEntriesConfigs(CustomCategoryLabels);
+	CreateCustomCategories(CustomCategoryLabels);
+
+	ProcessThisPanelActionEntriesConfigs();
+	CreateScrollBoxCategoryEntry(ThisPanelCategoryEntry, TEXT("此面板"), true);
+
+	// Read the cache from asset to circumvent issues of automatic reinitializing after opening a level
+	SetSearchKeyText(CacheAsset->CachedSearchKeyText);  // do this before setting category as it matters if it is the search cateogry
+	if (CategoryNameEntryMap.Contains(CacheAsset->CachedSelectedCategoryLabel))
 	{
-		PrefAsset = Cast<UOnestopPrefDataAsset>(UMyEditorFunctionLibrary::LoadAsset(PrefAssetName, PrefFolderPath));
+		SelectCategory(CategoryNameEntryMap[CacheAsset->CachedSelectedCategoryLabel]);
 	}
 	else
 	{
-		PrefAsset = Cast<UOnestopPrefDataAsset>(UMyEditorFunctionLibrary::CreateAsset(
-			PrefAssetName,
-			PrefFolderPath,
-			UOnestopPrefDataAsset::StaticClass(),
-			NewObject<UDataAssetFactory>()
-		));
+		SelectCategory(CommonlyUsedCategoryEntry);  // if the one in the asset is illegal then by default select CommonlyUsed
 	}
-
-	// Debug
-	if (PrefAsset->ActionWeights.Contains("Test"))
-	{
-		PrefAsset->ActionWeights["Test"] += 1.0;
-	}
-	else
-	{
-		PrefAsset->ActionWeights.Add("Test", 1.0);
-	}
-	UMyEditorFunctionLibrary::SaveAsset(PrefAsset);
-
-	SearchCategoryEntry->CategoryLabel = TEXT("搜索");
-	SearchCategoryEntry->SetDisplayText(FText::FromString(TEXT("搜索")));
-	SearchCategoryEntry->OnSelected.BindUObject(this, &UOnestopEditorUtilityWidget::SelectCategory);
-
-	TArray<FString> CustomActionLabels;
-	ProcessCustomActionEntriesConfigs(CustomActionLabels);
-
-
-	CreateCustomCategories(CustomActionLabels);
-
-	UEditorUtilityWidget* ThisPanelWidget = CreateSubWidget(CategoryEntryClass);
-	CategoryScrollBox->AddChild(ThisPanelWidget);
-	ThisPanelCategoryEntry = Cast<UOnestopCategoryEntry>(ThisPanelWidget);
-	ThisPanelCategoryEntry->CategoryLabel = TEXT("此面板");
-	ThisPanelCategoryEntry->SetDisplayText(FText::FromString(TEXT("此面板")));
-	ThisPanelCategoryEntry->OnSelected.BindUObject(this, &UOnestopEditorUtilityWidget::SelectCategory);
 
 	return true;
+}
+
+void UOnestopEditorUtilityWidget::OnSearchKeyTextUpdated()
+{
+	if (SelectedCategoryEntry == SearchCategoryEntry)
+	{
+		ActionScrollBox->ClearChildren();
+		FillSearchCategoryActionEntries();
+	}
+	else
+	{
+		if (!GetSearchKeyText().TrimStartAndEnd().IsEmpty())
+		{
+			SelectCategory(SearchCategoryEntry);  // this will refresh the scrollbox
+		}
+	}
 }
 
 UEditorUtilityWidget* UOnestopEditorUtilityWidget::CreateSubWidget(TSubclassOf<UEditorUtilityWidget> WidgetClass)
@@ -253,33 +293,86 @@ UEditorUtilityWidget* UOnestopEditorUtilityWidget::CreateSubWidget(TSubclassOf<U
     return CreatedUMGWidget;
 }
 
+void UOnestopEditorUtilityWidget::InitLocalAsset()
+{
+	UMyEditorFunctionLibrary::CreateDirectoryTree(LocalFolderPath);
+
+	PrefAsset = Cast<UOnestopPrefDataAsset>(UMyEditorFunctionLibrary::LoadAsset(PrefAssetName, LocalFolderPath));
+	if (!PrefAsset)
+	{
+		PrefAsset = Cast<UOnestopPrefDataAsset>(UMyEditorFunctionLibrary::CreateAsset(
+			PrefAssetName,
+			LocalFolderPath,
+			UOnestopPrefDataAsset::StaticClass(),
+			NewObject<UDataAssetFactory>()
+		));
+	}
+
+	CacheAsset = Cast<UOnestopCacheDataAsset>(UMyEditorFunctionLibrary::LoadAsset(CacheAssetName, LocalFolderPath));
+	if (!CacheAsset)
+	{
+		CacheAsset = Cast<UOnestopCacheDataAsset>(UMyEditorFunctionLibrary::CreateAsset(
+			CacheAssetName,
+			LocalFolderPath,
+			UOnestopCacheDataAsset::StaticClass(),
+			NewObject<UDataAssetFactory>()
+		));
+	}
+}
+
+void UOnestopEditorUtilityWidget::InitCategoryEntry(UOnestopCategoryEntry* Entry, const FString& Label, bool bIsSpecial)
+{
+	Entry->CategoryLabel = Label;
+	Entry->SetDisplayText(FText::FromString(Label));
+	Entry->SetIsSpecialCategory(bIsSpecial);
+	Entry->OnSelected.BindUObject(this, &UOnestopEditorUtilityWidget::SelectCategory);
+	CategoryNameEntryMap.Add(Label, Entry);
+}
+
+void UOnestopEditorUtilityWidget::CreateScrollBoxCategoryEntry(UOnestopCategoryEntry*& Entry, const FString& Label, bool bIsSpecial)
+{
+	UEditorUtilityWidget* CatgoryWidget = CreateSubWidget(CategoryEntryClass);
+	CategoryScrollBox->AddChild(CatgoryWidget);
+	Entry = Cast<UOnestopCategoryEntry>(CatgoryWidget);
+	InitCategoryEntry(Entry, Label, bIsSpecial);
+}
+
+void UOnestopEditorUtilityWidget::PrecreateEmptyActionEntries()
+{
+	// Pre compute empty entries; NumActionsPerRow - 1 of those should be enough
+	for (int32 EmptyIndex = 0; EmptyIndex < NumActionsPerRow - 1; EmptyIndex++)
+	{
+		EmptyActionEntries.Add(CreateSubWidget(EmptyActionEntryClass));
+	}
+}
+
 void UOnestopEditorUtilityWidget::ProcessCustomActionEntriesConfigs(TArray<FString>& OutCustomCategoryLabels)
 {
-	// Pre compute action entries for custom categories
 	for (const OnestopActionEntryConfig& Config : CustomActionEntryConfigs)
 	{
 		const FString& CategoryLabel = Config.CategoryName;
 		const FString& ActionLabel = Config.ActionName;
 		UOnestopActionEntry* ActionEntry = Cast<UOnestopActionEntry>(CreateSubWidget(ActionEntryClass));
+		ActionEntry->ActionLabel = ActionLabel;
 		ActionEntry->SetDisplayText(FText::FromString(ActionLabel));
 		ActionEntry->OnSelected.BindUObject(this, Config.Func);
+		ActionEntry->PostSelected.BindUObject(this, &UOnestopEditorUtilityWidget::PostCustomActionSelected);
+		if (PrefAsset->BookmarkedActions.Contains(ActionLabel))
+		{
+			ActionEntry->InitIsBookmarked(true);
+		}
+		ActionEntry->PostIsBookmarkedUpdate.BindUObject(this, &UOnestopEditorUtilityWidget::PostIsBookmarkedUpdate);
 		ActionNameEntryMap.Add(ActionLabel, ActionEntry);
 		AllCustomActionEntries.Add(ActionEntry);
-		if (CategoryActionsMap.Contains(CategoryLabel))
+		if (CustomCategoryActionsMap.Contains(CategoryLabel))
 		{
-			CategoryActionsMap[CategoryLabel].Add(ActionEntry);
+			CustomCategoryActionsMap[CategoryLabel].Add(ActionEntry);
 		}
 		else
 		{
-			CategoryActionsMap.Add(CategoryLabel, {ActionEntry});
+			CustomCategoryActionsMap.Add(CategoryLabel, {ActionEntry});
 			OutCustomCategoryLabels.Add(CategoryLabel);
 		}
-	}
-
-	// Pre compute empty entries; NumActionsPerRow - 1 of those should be enough
-	for (int32 EmptyIndex = 0; EmptyIndex < NumActionsPerRow - 1; EmptyIndex++)
-	{
-		EmptyActionEntries.Add(CreateSubWidget(EmptyActionEntryClass));
 	}
 }
 
@@ -290,16 +383,44 @@ void UOnestopEditorUtilityWidget::CreateCustomCategories(const TArray<FString>& 
 		UEditorUtilityWidget* CategoryWidget = CreateSubWidget(CategoryEntryClass);
 		CategoryScrollBox->AddChild(CategoryWidget);
 		UOnestopCategoryEntry* CategoryEntry = Cast<UOnestopCategoryEntry>(CategoryWidget);
-		CategoryEntry->CategoryLabel = Label;
-		CategoryEntry->SetDisplayText(FText::FromString(Label));
-		CategoryEntry->OnSelected.BindUObject(this, &UOnestopEditorUtilityWidget::SelectCategory);
+		InitCategoryEntry(CategoryEntry, Label);
+	}
+}
+
+void UOnestopEditorUtilityWidget::ProcessThisPanelActionEntriesConfigs()
+{
+	for (const OnestopSpecificCategoryActionEntryConfig& Config : ThisPanelActionEntryConfigs)
+	{
+		const FString& ActionLabel = Config.ActionName;
+		UOnestopActionEntry* ActionEntry = Cast<UOnestopActionEntry>(CreateSubWidget(ActionEntryClass));
+		ActionEntry->ActionLabel = ActionLabel;
+		ActionEntry->SetDisplayText(FText::FromString(ActionLabel));
+		ActionEntry->OnSelected.BindUObject(this, Config.Func);
+		ActionEntry->InitIsBookmarkable(false);
+		ActionNameEntryMap.Add(ActionLabel, ActionEntry);
+		ThisPanelActionEntries.Add(ActionEntry);
 	}
 }
 
 void UOnestopEditorUtilityWidget::SelectCategory(UOnestopCategoryEntry* Entry)
 {
+	if (Entry == SelectedCategoryEntry)
+	{
+		return;
+	}
+
+	SelectedCategoryEntry = Entry;
+
+	// Intensionally not saving CacheAsset after modifying so restarting the engine would be use the manually set default one
+	CacheAsset->CachedSelectedCategoryLabel = Entry->CategoryLabel;
+
+	if (Entry != SearchCategoryEntry)
+	{
+		ResetSearchState();
+	}
+
 	SelectCategoryEntry(Entry);
-	RefreshActionEntriesForCategory(Entry);	
+	RefreshActionEntriesForCategory(Entry);
 }
 
 void UOnestopEditorUtilityWidget::SelectCategoryEntry(UOnestopCategoryEntry* Entry)
@@ -322,32 +443,103 @@ void UOnestopEditorUtilityWidget::ClearSelectedCategoryEntry()
 	}
 }
 
-void UOnestopEditorUtilityWidget::RefreshActionEntriesForCategory(const UOnestopCategoryEntry* Entry)
+void UOnestopEditorUtilityWidget::RefreshActionEntriesForCategory(const UOnestopCategoryEntry* CategoryEntry)
 {
 	ActionScrollBox->ClearChildren();
 
-	if (Entry == SearchCategoryEntry)
+	if (CategoryEntry == SearchCategoryEntry)
 	{
-
+		FillSearchCategoryActionEntries();
 	}
-	else if (Entry == BookmarkCategoryEntry)
+	else if (CategoryEntry == BookmarkCategoryEntry)
 	{
+		FillBookmarkCategoryActionEntries();
 	}
-	else if (Entry == CommonlyUsedCategoryEntry)
+	else if (CategoryEntry == CommonlyUsedCategoryEntry)
 	{
-
+		FillCommonlyUsedCategoryActionEntries();
 	}
-	else if (Entry == ThisPanelCategoryEntry)
+	else if (CategoryEntry == ThisPanelCategoryEntry)
 	{
-
+		FillThisPanelCategoryActionEntries();
 	}
 	else
 	{
-		const FString& CategoryLabel = Entry->CategoryLabel;
-		if (CategoryActionsMap.Contains(CategoryLabel))
+		FillCustomCategoryActionEntries(CategoryEntry);
+	}
+}
+
+void UOnestopEditorUtilityWidget::FillSearchCategoryActionEntries()
+{
+	FString SearchKeyText = GetSearchKeyText();
+	CacheAsset->CachedSearchKeyText = SearchKeyText;  // Intensionally not saving CacheAsset after modifying so restarting the engine would be use the manually set default one
+
+	FString TrimedSearchKeyText = SearchKeyText.TrimStartAndEnd();
+	if (TrimedSearchKeyText.IsEmpty())
+	{
+		return;
+	}
+
+	TArray<UOnestopActionEntry*> ActionEntries;
+	for (UOnestopActionEntry* Entry : AllCustomActionEntries)
+	{
+		if (Entry->ActionLabel.Contains(TrimedSearchKeyText))
 		{
-			FillActionScrollBox(CategoryActionsMap[CategoryLabel]);
+			ActionEntries.Add(Entry);
 		}
+	}
+	for (UOnestopActionEntry* Entry : ThisPanelActionEntries)
+	{
+		if (Entry->ActionLabel.Contains(TrimedSearchKeyText))
+		{
+			ActionEntries.Add(Entry);
+		}
+	}
+
+	FillActionScrollBox(ActionEntries);
+}
+
+void UOnestopEditorUtilityWidget::FillBookmarkCategoryActionEntries()
+{
+	// Do reverse order, later added bookmarks are displayed first
+	TArray<UOnestopActionEntry*> ActionEntries;
+	for (int32 Index = PrefAsset->BookmarkedActions.Num() - 1; Index >= 0; Index--)
+	{
+		const FString& Label = PrefAsset->BookmarkedActions[Index];
+		ActionEntries.Add(ActionNameEntryMap[Label]);
+	}
+
+	FillActionScrollBox(ActionEntries);
+}
+
+void UOnestopEditorUtilityWidget::FillCommonlyUsedCategoryActionEntries()
+{
+	TArray<FString> ActionLabels;
+	PrefAsset->ActionWeights.GetKeys(ActionLabels);
+	ActionLabels.Sort([](const FString& A, const FString& B) {
+		return PrefAsset->ActionWeights[A] > PrefAsset->ActionWeights[B];
+		});
+
+	TArray<UOnestopActionEntry*> ActionEntries;
+	for (const FString& Label : ActionLabels)
+	{
+		ActionEntries.Add(ActionNameEntryMap[Label]);
+	}
+
+	FillActionScrollBox(ActionEntries);
+}
+
+void UOnestopEditorUtilityWidget::FillThisPanelCategoryActionEntries()
+{
+	FillActionScrollBox(ThisPanelActionEntries);
+}
+
+void UOnestopEditorUtilityWidget::FillCustomCategoryActionEntries(const UOnestopCategoryEntry* CategoryEntry)
+{
+	const FString& CategoryLabel = CategoryEntry->CategoryLabel;
+	if (CustomCategoryActionsMap.Contains(CategoryLabel))
+	{
+		FillActionScrollBox(CustomCategoryActionsMap[CategoryLabel]);
 	}
 }
 
@@ -388,4 +580,45 @@ void UOnestopEditorUtilityWidget::FillActionScrollBox(const TArray<UOnestopActio
 		}
 		ActionScrollBox->AddChild(Row);
 	}
+}
+
+void UOnestopEditorUtilityWidget::PostCustomActionSelected(UOnestopActionEntry* Entry)
+{
+	for (auto It = PrefAsset->ActionWeights.CreateIterator(); It; ++It)
+	{
+		It.Value() *= WeightDecayFactor;
+	}
+
+	const FString& ActionLabel = Entry->ActionLabel;
+	if (PrefAsset->ActionWeights.Contains(ActionLabel))
+	{
+		PrefAsset->ActionWeights[ActionLabel] += 1.0;
+	}
+	else
+	{
+		PrefAsset->ActionWeights.Add(ActionLabel, 1.0);
+	}
+
+	UMyEditorFunctionLibrary::SaveAsset(PrefAsset);
+}
+
+void UOnestopEditorUtilityWidget::PostIsBookmarkedUpdate(UOnestopActionEntry* Entry, const bool bBookmarked)
+{
+	const FString& ActionLabel = Entry->ActionLabel;
+
+	const int IndexInArray = PrefAsset->BookmarkedActions.Find(ActionLabel);
+	
+	// If removing then this is needed;
+	// If adding, though this shouldn't happen, but just in case we also first remove then add to refresh position 
+	if (IndexInArray != INDEX_NONE)
+	{
+		PrefAsset->BookmarkedActions.RemoveAt(IndexInArray);
+	}
+
+	if (bBookmarked)
+	{
+		PrefAsset->BookmarkedActions.Add(ActionLabel);
+	}
+
+	UMyEditorFunctionLibrary::SaveAsset(PrefAsset);
 }

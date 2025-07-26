@@ -47,6 +47,7 @@ public class FenixStochasticUtilsEditor : ModuleRules
                 "UMGEditor",
                 "Blutility",
                 "LevelEditor",
+                "ToolMenus",
                 "FenixStochasticUtils",
 				// ... add private dependencies that you statically link with here ...	
 			}
